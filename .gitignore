@@ -1,0 +1,20 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Google API Credentials / Secrets
+credentials.json
+.env
+.flaskenv
+
+# Virtual environment folders
+.venv/
+venv/
+ENV/
+env/
+
+# IDE / System files
+.vscode/
+.idea/
+.DS_Store

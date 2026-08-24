@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MailWatch - Inbox Deadline Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card-bg: rgba(23, 32, 51, 0.7);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent: #6366f1;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --badge-overdue: #ef4444;
+            --badge-urgent: #f97316;
+            --badge-soon: #eab308;
+            --badge-upcoming: #10b981;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+
+        body {
+            background: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding-bottom: 60px;
+        }
+
+        header {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            padding: 14px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; }
+        .brand-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+
+        .btn-logout {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 14px; font-weight: 500;
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            transition: all 0.2s ease;
+        }
+        .btn-logout:hover { color: #fff; background: rgba(255,255,255,0.05); }
+
+        .container { max-width: 1100px; margin: 32px auto; padding: 0 24px; }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .stat-pill {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .stat-pill strong { color: var(--text-main); }
+        .stat-dot {
+            width: 7px; height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .dot-work       { background: #4f8ef7; }
+        .dot-personal   { background: #22c55e; }
+        .dot-promotions { background: #eab308; }
+        .dot-finance    { background: #f97316; }
+        .dot-spam       { background: #ef4444; }
+
+        /* Filter Tabs */
+        .filter-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .tab {
+            padding: 7px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid var(--card-border);
+            background: transparent;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .tab:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
+        .tab.active {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+        .tab-divider {
+            width: 1px;
+            height: 28px;
+            background: var(--card-border);
+            align-self: center;
+            margin: 0 2px;
+        }
+
+        /* Email Cards */
+        .email-list { display: flex; flex-direction: column; gap: 14px; }
+
+        .email-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--card-border);
+            border-radius: 14px;
+            padding: 18px 22px;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+        .email-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,0.4); }
+        .email-card.unread { border-left: 4px solid var(--accent); }
+
+        .card-top {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .card-top-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .sender { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+        .date-sent { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+
+        .subject {
+            font-size: 16px; font-weight: 600;
+            margin-bottom: 7px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .unread-dot {
+            width: 8px; height: 8px;
+            background: var(--accent); border-radius: 50%;
+            display: inline-block; flex-shrink: 0;
+        }
+
+        .snippet { font-size: 13px; color: #d1d5db; line-height: 1.5; margin-bottom: 12px; }
+
+        /* Urgency / Deadline */
+        .deadline-box {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px dashed var(--card-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .deadline-info { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .urgency-badge {
+            padding: 3px 9px; border-radius: 6px;
+            font-size: 10px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .badge-overdue  { background: rgba(239,68,68,0.2);  color: var(--badge-overdue);  border: 1px solid var(--badge-overdue); }
+        .badge-urgent   { background: rgba(249,115,22,0.2); color: var(--badge-urgent);   border: 1px solid var(--badge-urgent); }
+        .badge-soon     { background: rgba(234,179,8,0.2);  color: var(--badge-soon);     border: 1px solid var(--badge-soon); }
+        .badge-upcoming { background: rgba(16,185,129,0.2); color: var(--badge-upcoming); border: 1px solid var(--badge-upcoming); }
+        .context-quote  { font-size: 12px; font-style: italic; color: #9ca3af; }
+
+        /* Category Badges */
+        .cat-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 10px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+        .cat-work       { background: rgba(79,142,247,0.12); color: #4f8ef7; border: 1px solid #4f8ef7; }
+        .cat-personal   { background: rgba(34,197,94,0.12);  color: #22c55e; border: 1px solid #22c55e; }
+        .cat-promotions { background: rgba(234,179,8,0.12);  color: #eab308; border: 1px solid #eab308; }
+        .cat-finance    { background: rgba(249,115,22,0.12); color: #f97316; border: 1px solid #f97316; }
+        .cat-spam       { background: rgba(239,68,68,0.12);  color: #ef4444; border: 1px solid #ef4444; }
+
+        .loading-state, .error-state {
+            text-align: center; padding: 60px 0; color: var(--text-muted);
+        }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%; border-top-color: var(--accent);
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .result-count {
+            font-size: 12px; color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="brand">
+            <div class="brand-icon">📬</div>
+            MailWatch
+        </div>
+        <a href="/logout" class="btn-logout">Logout</a>
+    </header>
+
+    <div class="container">
+
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="stats-bar">
+            <div class="stat-pill">Total: <strong id="total-count">0</strong></div>
+            <div class="stat-pill">📅 Deadlines: <strong id="deadline-count">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-work"></span> Work: <strong id="count-work">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-personal"></span> Personal: <strong id="count-personal">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-promotions"></span> Promos: <strong id="count-promotions">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-finance"></span> Finance: <strong id="count-finance">0</strong></div>
+            <div class="stat-pill"><span class="stat-dot dot-spam"></span> Spam: <strong id="count-spam">0</strong></div>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs">
+            <button class="tab active" data-filter="all">All</button>
+            <button class="tab" data-filter="deadlines">📅 Deadlines</button>
+            <button class="tab" data-filter="unread">🔵 Unread</button>
+            <div class="tab-divider"></div>
+            <button class="tab" data-filter="work">📁 Work</button>
+            <button class="tab" data-filter="personal">👤 Personal</button>
+            <button class="tab" data-filter="promotions">🛍️ Promos</button>
+            <button class="tab" data-filter="finance">💰 Finance</button>
+            <button class="tab" data-filter="spam">🚫 Spam</button>
+        </div>
+
+        <div id="result-count" class="result-count"></div>
+        <div id="content-area">
+            <div class="loading-state">
+                <div class="spinner"></div>
+                <p>Scanning Gmail Inbox with spaCy &amp; Regex NER...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const catIcon  = { work: '📁', personal: '👤', promotions: '🛍️', finance: '💰', spam: '🚫' };
+        const catLabel = { work: 'Work', personal: 'Personal', promotions: 'Promos', finance: 'Finance', spam: 'Spam' };
+        const categoryFilters = ['work', 'personal', 'promotions', 'finance', 'spam'];
+
+        let allEmails = [];
+        let activeFilter = 'all';
+
+        async function fetchEmails() {
+            const contentArea = document.getElementById('content-area');
+            try {
+                const res = await fetch('/api/emails');
+                if (!res.ok) {
+                    if (res.status === 401) { window.location.href = '/login'; return; }
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                const data = await res.json();
+                if (data.error) {
+                    contentArea.innerHTML = `<div class="error-state"><p>⚠️ ${escapeHtml(data.error)}</p></div>`;
+                    return;
+                }
+                allEmails = data;
+                updateStats();
+                renderAll();
+            } catch (err) {
+                contentArea.innerHTML = `<div class="error-state"><p>⚠️ Error loading emails: ${err.message}</p></div>`;
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('total-count').textContent = allEmails.length;
+            document.getElementById('deadline-count').textContent = allEmails.filter(e => e.deadline).length;
+            ['work','personal','promotions','finance','spam'].forEach(c => {
+                document.getElementById('count-' + c).textContent = allEmails.filter(e => e.category === c).length;
+            });
+        }
+
+        function renderAll() {
+            let emails = [...allEmails];
+
+            if (activeFilter === 'deadlines') {
+                emails = emails.filter(e => e.deadline);
+            } else if (activeFilter === 'unread') {
+                emails = emails.filter(e => e.unread);
+            } else if (categoryFilters.includes(activeFilter)) {
+                emails = emails.filter(e => e.category === activeFilter);
+            }
+
+            const resultCount = document.getElementById('result-count');
+            resultCount.textContent = emails.length === allEmails.length
+                ? `${emails.length} emails`
+                : `${emails.length} of ${allEmails.length} emails`;
+
+            const contentArea = document.getElementById('content-area');
+            if (emails.length === 0) {
+                contentArea.innerHTML = '<div class="error-state"><p>No emails match this filter.</p></div>';
+                return;
+            }
+            contentArea.innerHTML = `<div class="email-list">${emails.map(renderEmail).join('')}</div>`;
+        }
+
+        function renderEmail(e) {
+            const badgeClass = e.urgency ? `badge-${e.urgency}` : '';
+            const dateFormatted = e.date ? new Date(e.date).toLocaleString() : '';
+            const cat = e.category || 'personal';
+
+            return `
+                <div class="email-card ${e.unread ? 'unread' : ''}">
+                    <div class="card-top">
+                        <div class="card-top-left">
+                            <span class="sender">${escapeHtml(e.sender)}</span>
+                            <span class="cat-badge cat-${cat}">${catIcon[cat]} ${catLabel[cat]}</span>
+                        </div>
+                        <span class="date-sent">${dateFormatted}</span>
+                    </div>
+                    <div class="subject">
+                        ${e.unread ? '<span class="unread-dot"></span>' : ''}
+                        ${escapeHtml(e.subject || '(No Subject)')}
+                    </div>
+                    <div class="snippet">${escapeHtml(e.snippet)}</div>
+                    ${e.deadline ? `
+                        <div class="deadline-box">
+                            <div class="deadline-info">
+                                <span>📅 <strong>${e.deadline}</strong></span>
+                                <span class="urgency-badge ${badgeClass}">${e.urgency}</span>
+                            </div>
+                            <div class="context-quote">"${escapeHtml(e.context)}"</div>
+                        </div>
+                    ` : ''}
+                </div>`;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                btn.classList.add('active');
+                activeFilter = btn.dataset.filter;
+                renderAll();
+            });
+        });
+
+        fetchEmails();
+    </script>
+</body>
+</html>
