@@ -3,144 +3,520 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MailWatch - Login</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>MailWatch — Sign In</title>
+    <meta name="description" content="AI-Powered Gmail Inbox Organizer and Urgency Dashboard. Sign in securely to analyze deadlines and prioritize your inbox.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #090d16;
-            --card-bg: rgba(22, 30, 46, 0.7);
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --border: rgba(255, 255, 255, 0.1);
+            --bg-base: #0f0a1c;
+            --card-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.08) 0%, rgba(42, 22, 54, 0.45) 40%, rgba(18, 14, 32, 0.65) 100%);
+            --card-border: rgba(255, 255, 255, 0.15);
+            --card-shadow: 0 32px 64px -12px rgba(0, 0, 0, 0.65), 0 0 50px rgba(58, 28, 76, 0.25);
+            --avatar-circle-bg: rgba(255, 255, 255, 0.08);
+            --avatar-fill: rgba(255, 255, 255, 0.32);
+            --input-border: rgba(255, 255, 255, 0.32);
+            --input-border-focus: rgba(255, 255, 255, 0.88);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.72);
+            --text-placeholder: rgba(255, 255, 255, 0.62);
+            --btn-gradient: linear-gradient(90deg, #3f092b 0%, #251645 42%, #4963aa 100%);
+            --btn-gradient-hover: linear-gradient(90deg, #520d38 0%, #311c5a 42%, #5775c4 100%);
+            --btn-shadow: 0 10px 24px rgba(18, 9, 32, 0.55), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+            --btn-shadow-hover: 0 14px 28px rgba(73, 99, 170, 0.38), inset 0 1px 1px rgba(255, 255, 255, 0.35);
         }
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
         }
 
         body {
-            background: var(--bg);
-            background-image: 
-                radial-gradient(at 20% 20%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
-                radial-gradient(at 80% 80%, rgba(236, 72, 153, 0.12) 0px, transparent 50%);
             min-height: 100vh;
+            background-color: var(--bg-base);
+            background-image: 
+                radial-gradient(circle at 65% 26%, rgba(132, 28, 68, 0.42) 0%, transparent 42%),
+                radial-gradient(circle at 78% 82%, rgba(68, 92, 160, 0.42) 0%, transparent 48%),
+                radial-gradient(circle at 22% 44%, rgba(56, 22, 78, 0.52) 0%, transparent 52%),
+                radial-gradient(circle at 48% 92%, rgba(42, 60, 115, 0.28) 0%, transparent 45%);
+            background-attachment: fixed;
+            background-size: cover;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-main);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: var(--text-primary);
+            padding: 32px 20px;
+            overflow-x: hidden;
+            position: relative;
         }
 
-        .login-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            padding: 40px;
+        /* Ambient background orbs for smooth blurred glass effect */
+        .ambient-glow {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 0;
+        }
+
+        .ambient-glow-crimson {
+            top: 10%;
+            right: 22%;
+            width: 380px;
+            height: 380px;
+            background: radial-gradient(circle, rgba(162, 32, 82, 0.38) 0%, transparent 70%);
+            filter: blur(65px);
+        }
+
+        .ambient-glow-blue {
+            bottom: 10%;
+            right: 18%;
+            width: 440px;
+            height: 440px;
+            background: radial-gradient(circle, rgba(82, 110, 192, 0.36) 0%, transparent 70%);
+            filter: blur(75px);
+        }
+
+        .ambient-glow-purple {
+            top: 36%;
+            left: 20%;
+            width: 420px;
+            height: 420px;
+            background: radial-gradient(circle, rgba(74, 28, 102, 0.35) 0%, transparent 70%);
+            filter: blur(80px);
+        }
+
+        /* Main Container */
+        main {
+            position: relative;
+            z-index: 10;
             width: 100%;
-            max-width: 440px;
-            text-align: center;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            max-width: 410px;
+            display: flex;
+            justify-content: center;
         }
 
-        .logo-badge {
+        /* Frosted Glass Card */
+        .glass-card {
+            width: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(35px) saturate(160%);
+            -webkit-backdrop-filter: blur(35px) saturate(160%);
+            border: 1px solid var(--card-border);
+            border-radius: 40px;
+            padding: 44px 36px 40px;
+            box-shadow: var(--card-shadow), inset 0 1px 1px 0 rgba(255, 255, 255, 0.22);
+            position: relative;
+        }
+
+        /* Avatar silhouette container */
+        .avatar-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 34px;
+        }
+
+        .avatar-circle {
+            width: 98px;
+            height: 98px;
+            border-radius: 50%;
+            background: var(--avatar-circle-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .avatar-svg {
+            width: 82px;
+            height: 82px;
+            display: block;
+        }
+
+        /* Error Notification Banner */
+        .alert-banner {
+            background: rgba(220, 38, 38, 0.2);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color: #fecaca;
+            padding: 12px 16px;
+            border-radius: 16px;
+            font-size: 13px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            line-height: 1.4;
+        }
+
+        /* Input fields */
+        .form-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 2px;
+            bottom: 12px;
+            width: 18px;
+            height: 18px;
+            color: rgba(255, 255, 255, 0.75);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-icon svg {
+            width: 100%;
+            height: 100%;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .glass-input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 1.5px solid var(--input-border);
+            padding: 10px 8px 10px 32px;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 14.5px;
+            font-weight: 400;
+            letter-spacing: 0.2px;
+            outline: none;
+            transition: border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .glass-input::placeholder {
+            color: var(--text-placeholder);
+            font-weight: 400;
+        }
+
+        .glass-input:focus {
+            border-bottom-color: var(--input-border-focus);
+            box-shadow: 0 1px 0 var(--input-border-focus);
+        }
+
+        /* Controls row: Remember me & Forgot Password */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            font-size: 13px;
+        }
+
+        .remember-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            user-select: none;
+            font-size: 13px;
+        }
+
+        .hidden-checkbox {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        .styled-checkbox {
+            width: 15px;
+            height: 15px;
+            border: 1.5px solid rgba(255, 255, 255, 0.55);
+            border-radius: 3px;
+            background: rgba(0, 0, 0, 0.25);
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #6366f1, #ec4899);
-            border-radius: 16px;
-            font-size: 28px;
-            margin-bottom: 24px;
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            transition: all 0.2s ease;
+            flex-shrink: 0;
         }
 
-        h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            letter-spacing: -0.5px;
+        .hidden-checkbox:checked + .styled-checkbox {
+            background: rgba(255, 255, 255, 0.92);
+            border-color: #ffffff;
         }
 
-        p.subtitle {
-            color: var(--text-muted);
-            font-size: 14px;
-            margin-bottom: 32px;
-            line-height: 1.5;
+        .hidden-checkbox:checked + .styled-checkbox::after {
+            content: "";
+            width: 4px;
+            height: 8px;
+            border: solid #180d28;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg) translate(-0.5px, -1px);
         }
 
-        .auth-btn {
+        .hidden-checkbox:focus-visible + .styled-checkbox {
+            outline: 2px solid #ffffff;
+            outline-offset: 2px;
+        }
+
+        .forgot-link {
+            font-style: italic;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            transition: color 0.2s ease;
+        }
+
+        .forgot-link:hover,
+        .forgot-link:focus-visible {
+            color: #ffffff;
+            text-decoration: underline;
+        }
+
+        /* Action Buttons */
+        .login-btn {
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: 9999px;
+            background: var(--btn-gradient);
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 600;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: var(--btn-shadow);
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+        }
+
+        .login-btn:hover {
+            background: var(--btn-gradient-hover);
+            transform: translateY(-1.5px);
+            box-shadow: var(--btn-shadow-hover);
+        }
+
+        .login-btn:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.8);
+            outline-offset: 3px;
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Divider & Google OAuth Option */
+        .oauth-divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0 18px;
+            color: rgba(255, 255, 255, 0.45);
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .oauth-divider::before,
+        .oauth-divider::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .oauth-divider span {
+            padding: 0 12px;
+        }
+
+        .google-btn {
+            width: 100%;
+            height: 46px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 12px;
-            width: 100%;
-            padding: 14px 20px;
-            background: var(--accent);
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-radius: 9999px;
             color: #ffffff;
-            font-weight: 600;
-            font-size: 15px;
-            border-radius: 12px;
+            font-family: inherit;
+            font-size: 13.5px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
             text-decoration: none;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
         }
 
-        .auth-btn:hover {
-            background: var(--accent-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.6);
+        .google-btn:hover {
+            background: rgba(255, 255, 255, 0.14);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
         }
 
-        .auth-btn svg {
-            width: 20px;
-            height: 20px;
+        .google-btn:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.8);
+            outline-offset: 2px;
         }
 
-        .features {
-            margin-top: 32px;
-            padding-top: 24px;
-            border-top: 1px solid var(--border);
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
         }
 
-        .feat-item {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .feat-item span {
-            display: block;
-            font-size: 16px;
-            margin-bottom: 4px;
+        @media (max-width: 440px) {
+            .glass-card {
+                padding: 36px 24px 32px;
+                border-radius: 32px;
+            }
+            .avatar-circle {
+                width: 86px;
+                height: 86px;
+            }
+            .avatar-svg {
+                width: 72px;
+                height: 72px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-card">
-        <div class="logo-badge">📬</div>
-        <h1>MailWatch</h1>
-        <p class="subtitle">AI-Powered Inbox Deadline & Urgency Radar. Connect your Gmail account to scan for actionable responses.</p>
+    <div class="ambient-glow ambient-glow-crimson" aria-hidden="true"></div>
+    <div class="ambient-glow ambient-glow-blue" aria-hidden="true"></div>
+    <div class="ambient-glow ambient-glow-purple" aria-hidden="true"></div>
 
-        <a href="/authorize" class="auth-btn">
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032 s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2 C7.021,2,2.545,6.477,2.545,12s4.476,10,10,10c5.753,0,9.743-4.043,9.743-9.914c0-0.669-0.066-1.317-0.187-1.847H12.545z"/>
-            </svg>
-            Connect with Gmail
-        </a>
+    <main>
+        <section class="glass-card" aria-label="Sign In Card">
+            <header class="avatar-wrap">
+                <div class="avatar-circle" aria-hidden="true">
+                    <svg viewBox="0 0 100 100" class="avatar-svg">
+                        <!-- Head -->
+                        <circle cx="50" cy="36" r="17" fill="var(--avatar-fill)"/>
+                        <!-- Torso/Shoulders -->
+                        <path d="M20 86 C20 62, 33 55, 50 55 C67 55, 80 62, 80 86 Z" fill="var(--avatar-fill)"/>
+                    </svg>
+                </div>
+            </header>
 
-        <div class="features">
-            <div class="feat-item"><span>⚡</span>Real-time NER</div>
-            <div class="feat-item"><span>📅</span>Smart Dates</div>
-            <div class="feat-item"><span>🔥</span>Urgency Sorting</div>
-        </div>
-    </div>
+            {% if error %}
+            <div class="alert-banner" role="alert">
+                <span>⚠️</span>
+                <span>
+                    {% if error == 'access_denied' %}
+                        Google authorization was cancelled. Please try again.
+                    {% elif error == 'session_expired' %}
+                        Session expired. Please sign in to reconnect your Gmail inbox.
+                    {% elif error == 'invalid_grant' %}
+                        Authentication token expired. Please sign in again.
+                    {% else %}
+                        Authentication was interrupted. Please reconnect your account.
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+
+            <form id="login-form" action="/authorize" method="get">
+                <div class="form-fields">
+                    <div class="input-group">
+                        <span class="input-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                            </svg>
+                        </span>
+                        <input 
+                            type="email" 
+                            id="email" 
+                            name="email" 
+                            class="glass-input" 
+                            placeholder="Email ID" 
+                            autocomplete="username" 
+                            aria-label="Email ID"
+                        />
+                    </div>
+
+                    <div class="input-group">
+                        <span class="input-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </span>
+                        <input 
+                            type="password" 
+                            id="password" 
+                            name="password" 
+                            class="glass-input" 
+                            placeholder="Password" 
+                            autocomplete="current-password" 
+                            aria-label="Password"
+                        />
+                    </div>
+                </div>
+
+                <div class="controls-row">
+                    <label class="remember-label" for="remember-me">
+                        <input type="checkbox" id="remember-me" name="remember" class="hidden-checkbox" checked />
+                        <span class="styled-checkbox" aria-hidden="true"></span>
+                        <span>Remember me</span>
+                    </label>
+                    <a href="/authorize" class="forgot-link">Forgot Password?</a>
+                </div>
+
+                <button type="submit" class="login-btn" id="login-btn">
+                    LOGIN
+                </button>
+            </form>
+
+            <div class="oauth-divider" aria-hidden="true">
+                <span>or</span>
+            </div>
+
+            <a href="/authorize" class="google-btn" id="google-auth-link" aria-label="Sign in with Google">
+                <svg class="google-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                </svg>
+                <span>Sign in with Google</span>
+            </a>
+        </section>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', (e) => {
+                    // Direct submission seamlessly triggers Google OAuth flow
+                    // Form action="/authorize" ensures reliable standard navigation as well
+                });
+            }
+        });
+    </script>
 </body>
 </html>
