@@ -22,9 +22,10 @@ Email remains the primary channel for formal, academic, and business communicati
 ## 4. Objectives
 * **OAuth 2.0 Integration:** Securely connect and authenticate users using official Google OAuth 2.0 endpoints.
 * **Smart Category Classification:** Classify incoming emails into five distinct categories: `Work`, `Personal`, `Finance`, `Promotions`, and `Spam` based on custom domain, header, and keyword heuristic rules.
-* **NLP-Driven Deadline Extraction:** Identify explicit deadlines within text bodies using spaCy's Named Entity Recognition model coupled with regular expression fallbacks.
+* **NLP-Driven Deadline Extraction:** Identify explicit deadlines within text bodies using the latest spaCy Named Entity Recognition model (`en_core_web_sm` v3.8.0 / pipeline architecture) coupled with robust regular expression fallbacks.
 * **Urgency Prioritization:** Grade deadlines into `overdue`, `urgent`, `soon`, or `upcoming` classes and sort the dashboard to display critical items first.
 * **Modern Web Interface:** Present a responsive, glassmorphism dark-themed dashboard to easily filter and read actionable messages.
+* **Clues Sidebar & Evidence Docket:** Collapsible real-time docket drawer allowing instant full-text search, category filtering, jump-to-board focus, and dossier review across all retrieved emails.
 
 ---
 
@@ -43,11 +44,13 @@ The proposed system, **MailWatch**, introduces a context-aware approach to inbox
 * **Processing:** Decodes base64-encoded plain-text email bodies, passing them through NLP and regex parser modules.
 * **Extraction:** Scans for temporal expressions located near response triggers (e.g. *"reply by"*, *"deadline is"*).
 * **Display:** Sorts the processed emails using a custom two-tier logic: emails with active deadlines are prioritized chronologically ascending (nearest deadlines first), followed by non-deadline emails sorted descending by receipt date.
+* **Clues Docket (Sidebar):** An interactive slide-out docket accessible via header button, floating side tab, or keyboard shortcut (`C` / `Ctrl+B`) that lists all clues in chronological sequence, offering live search, category pills, quick "Next Urgent" navigation, and immediate card centering with vibration feedback on the board.
 
 ---
 
 ## 7. Literature Survey / Related Work
-* **Named Entity Recognition (NER) in Information Extraction:** Classic NER systems extract locations, organizations, and temporal entities. Using spaCy's lightweight English pipeline (`en_core_web_sm`) provides a balance of speed and accuracy for parsing informal temporal tokens like "15 August" or "Dec 31" directly inside CPU-bound environments.
+* **Named Entity Recognition (NER) in Information Extraction:** Classic and contemporary NER systems extract locations, organizations, and temporal entities. Using spaCy's latest English pipeline (`en_core_web_sm` v3.8.0 with Tok2Vec embeddings) provides an optimal balance of sub-millisecond inference speed and high accuracy for parsing informal temporal tokens like "15 August" or "Dec 31" directly inside CPU-bound environments, with an upgrade path to transformer-based architectures (`en_core_web_trf` using RoBERTa).
+* **Generative Foundation Models:** Integrating modern large language models (such as Google Gemini 1.5 Flash / Gemini 2.0) enables deep semantic disambiguation, complex multi-message intent extraction, and automated contextual reply composition.
 * **Heuristic Classification Models:** Rule-based heuristics leveraging email headers (e.g. `List-Unsubscribe`), sender domains, and subject keywords provide rapid, lightweight classification without requiring heavy GPU-bound deep learning models.
 * **OAuth 2.0 Authorization Code Flow with PKCE:** Implementing PKCE (Proof Key for Code Exchange) protects local web clients from authorization code injection attacks, ensuring secure access to Google's RESTful APIs.
 
@@ -64,7 +67,8 @@ The proposed system, **MailWatch**, introduces a context-aware approach to inbox
 * Support for IMAP/POP3 to integrate Outlook, Yahoo, and corporate mailboxes.
 * Multi-language NLP support for recognizing non-English deadlines.
 * Dynamic Google Calendar syncing to automatically add extracted deadlines.
-* Automatic draft generation of replies using generative AI models.
+* Automatic contextual draft generation of replies using latest generative AI models (Google Gemini 1.5 Flash / 2.0).
+* Support for high-precision transformer NER pipelines (`en_core_web_trf`) for enterprise-grade parsing.
 
 ---
 
@@ -104,7 +108,8 @@ Uses Google’s Flow client to request offline access and prompts user consent t
 
 ### Frameworks / Libraries
 * **Flask:** Light-weight backend web server.
-* **spaCy (`en_core_web_sm`):** NLP processing pipeline.
+* **spaCy (`en_core_web_sm` v3.8.0):** Latest English NLP processing pipeline with Tok2Vec embeddings and transition-based NER (supports upgrade to `en_core_web_trf` / transformer models).
+* **Generative AI Model Layer:** Support for latest Google Gemini models (Gemini 1.5 Flash / Gemini 2.0) for semantic intent understanding and smart reply drafting.
 * **google-api-python-client & google-auth-oauthlib:** Secure communication with Gmail API.
 * **python-dateutil:** For robust, fuzzy date parsing.
 
@@ -157,6 +162,7 @@ Uses Google’s Flow client to request offline access and prompts user consent t
 3. **Classification Engine:** Computes categorization scores based on heuristics, tagging emails into priority buckets.
 4. **NLP Extraction Engine:** Searches for key phrases, isolates local sub-strings, runs NER / Regex extractors, and parses calendar dates.
 5. **Dashboard Rendering Module:** Asynchronous JS dashboard displaying stats, filters, deadline timelines, and unread metrics.
+6. **Clues Sidebar & Docket Module:** Collapsible drawer interface providing indexable search, live category filtering, synchronization with board nodes, and one-click case dossier modal inspection.
 
 ---
 
@@ -165,6 +171,7 @@ Uses Google’s Flow client to request offline access and prompts user consent t
 * Real-time extraction showing the exact deadline date, urgency badge, and a contextual quote showing *why* that deadline was flagged.
 * Quick-action tabs allowing the user to view only high-priority tasks (e.g. Work, Finance, Deadlines).
 * Elimination of critical-deadline oversight by keeping actionable tasks pinned at the top of the interface.
+* Collapsible Clues Sidebar to search, inspect, and jump directly to critical tasks on the board without losing investigative context.
 
 ---
 
@@ -183,6 +190,7 @@ Uses Google’s Flow client to request offline access and prompts user consent t
 
 ## 15. References
 1. *Google OAuth 2.0 Web Client Documentation*: [https://developers.google.com/identity/protocols/oauth2](https://developers.google.com/identity/protocols/oauth2)
-2. *spaCy Language Processing Pipeline API Guide*: [https://spacy.io/usage/processing-pipelines](https://spacy.io/usage/processing-pipelines)
-3. *Gmail API Reference Guide*: [https://developers.google.com/gmail/api/reference/rest](https://developers.google.com/gmail/api/reference/rest)
-4. *Flask Session and Cookie Management Documentation*: [https://flask.palletsprojects.com/en/3.0.x/quickstart/#sessions](https://flask.palletsprojects.com/en/3.0.x/quickstart/#sessions)
+2. *spaCy Language Processing Pipeline & Models Guide (`en_core_web_sm` v3.8.0)*: [https://spacy.io/models/en#en_core_web_sm](https://spacy.io/models/en#en_core_web_sm)
+3. *Google Gemini API & Models Documentation*: [https://ai.google.dev/gemini-api/docs/models/gemini](https://ai.google.dev/gemini-api/docs/models/gemini)
+4. *Gmail API Reference Guide*: [https://developers.google.com/gmail/api/reference/rest](https://developers.google.com/gmail/api/reference/rest)
+5. *Flask Session and Cookie Management Documentation*: [https://flask.palletsprojects.com/en/3.0.x/quickstart/#sessions](https://flask.palletsprojects.com/en/3.0.x/quickstart/#sessions)
