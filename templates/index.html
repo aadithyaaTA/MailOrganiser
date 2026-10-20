@@ -1,385 +1,1784 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MailWatch - Inbox Deadline Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg: #0b0f19;
-            --card-bg: rgba(23, 32, 51, 0.7);
-            --card-border: rgba(255, 255, 255, 0.08);
-            --accent: #6366f1;
-            --text-main: #f3f4f6;
-            --text-muted: #9ca3af;
-            --badge-overdue: #ef4444;
-            --badge-urgent: #f97316;
-            --badge-soon: #eab308;
-            --badge-upcoming: #10b981;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MailWatch — Investigation Board</title>
+  <meta name="description" content="MailWatch AI Inbox Radar — Detective Board Interface.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7' fill='%23c0392b'/%3E%3Ccircle cx='6' cy='6' r='2' fill='%23ff9999'/%3E%3C/svg%3E" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+    :root {
+      --cork:       #7a5c30;
+      --note-y1:    #f5e642;
+      --note-y2:    #f0c040;
+      --note-y3:    #e8d87f;
+      --note-pink:  #f4b8b8;
+      --note-blue:  #b8d4f4;
+      --red:        #c0392b;
+      --red-bright: #ff3333;
+      --paper:      #d4c9a8;
+      --paper-dark: #b8a882;
+      --font-board: 'Special Elite', serif;
+      --font-ui:    'Rajdhani', sans-serif;
+      --font-mono:  'JetBrains Mono', monospace;
+    }
 
-        body {
-            background: var(--bg);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding-bottom: 60px;
-        }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden; background: #0d0a06;
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg transform='rotate(135 18 18)'%3E%3C!-- Pen Tip --%3E%3Cpolygon points='18,34 16,30 20,30' fill='%23c0c0c0' stroke='%23444' stroke-width='0.5'/%3E%3Ccircle cx='18' cy='34.5' r='0.8' fill='%23111'/%3E%3C!-- Grip --%3E%3Crect x='15.5' y='18' width='5' height='12' rx='1' fill='%232a2a2a' stroke='%231a1a1a' stroke-width='0.5'/%3E%3Cline x1='15.5' y1='22' x2='20.5' y2='22' stroke='%233a3a3a' stroke-width='0.5'/%3E%3Cline x1='15.5' y1='26' x2='20.5' y2='26' stroke='%233a3a3a' stroke-width='0.5'/%3E%3C!-- Silver Ring --%3E%3Crect x='15' y='16' width='6' height='2' rx='0.5' fill='%23d8d8d8' stroke='%23999' stroke-width='0.3'/%3E%3C!-- Pen Barrel/Cap --%3E%3Crect x='15.2' y='4' width='5.6' height='12' rx='2.8' fill='%23111111' stroke='%23000' stroke-width='0.5'/%3E%3C!-- Silver Clip --%3E%3Crect x='16.8' y='5' width='1.4' height='9' rx='0.7' fill='%23e0e0e0' stroke='%23888' stroke-width='0.3'/%3E%3C/g%3E%3C/svg%3E") 2 34, auto !important;
+    }
 
-        header {
-            background: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--card-border);
-            padding: 14px 32px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
+    button, select, a, .note, .red-rope, input {
+      cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='36' height='36' viewBox='0 0 36 36'%3E%3Cg transform='rotate(135 18 18)'%3E%3Cpolygon points='18,34 16,30 20,30' fill='%23e8c97a' stroke='%23b8860b' stroke-width='0.5'/%3E%3Ccircle cx='18' cy='34.5' r='0.8' fill='%23c0392b'/%3E%3Crect x='15.5' y='18' width='5' height='12' rx='1' fill='%231e1e1e' stroke='%23111' stroke-width='0.5'/%3E%3Crect x='15' y='16' width='6' height='2' rx='0.5' fill='%23e8c97a' stroke='%23b8860b' stroke-width='0.3'/%3E%3Crect x='15.2' y='4' width='5.6' height='12' rx='2.8' fill='%230a0a0a' stroke='%23000' stroke-width='0.5'/%3E%3Crect x='16.8' y='5' width='1.4' height='9' rx='0.7' fill='%23ffd700' stroke='%23b8860b' stroke-width='0.3'/%3E%3C/g%3E%3C/svg%3E") 2 34, pointer !important;
+    }
 
-        .brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 700; }
-        .brand-icon {
-            width: 38px; height: 38px;
-            background: linear-gradient(135deg, #6366f1, #ec4899);
-            border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 20px;
-        }
+    /* ── BOARD ── */
+    #board {
+      position: relative;
+      width: 100vw; height: 100vh;
+      overflow: hidden;
+      background-color: #2c1f0e;
+      background-image:
+        repeating-linear-gradient(91deg, transparent 0, transparent 18px, rgba(0,0,0,0.07) 18px, rgba(0,0,0,0.07) 20px),
+        linear-gradient(155deg, #3b2610 0%, #2c1f0e 35%, #1e1508 65%, #2c1f0e 100%);
+    }
 
-        .btn-logout {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 14px; font-weight: 500;
-            padding: 8px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--card-border);
-            transition: all 0.2s ease;
-        }
-        .btn-logout:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    /* ── CORK PANEL ── */
+    #cork {
+      position: absolute;
+      top: 60px; left: 0; right: 0; bottom: 0;
+      background-color: var(--cork);
+      background-image:
+        radial-gradient(ellipse at 25% 15%, rgba(180,130,60,0.5) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 75%, rgba(100,65,20,0.45) 0%, transparent 50%),
+        repeating-linear-gradient(45deg,  transparent, transparent 3px, rgba(0,0,0,0.055) 3px, rgba(0,0,0,0.055) 4px),
+        repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.025) 3px, rgba(255,255,255,0.025) 4px);
+      box-shadow: inset 0 0 80px rgba(0,0,0,0.5), inset 0 0 0 3px rgba(0,0,0,0.3);
+    }
 
-        .container { max-width: 1100px; margin: 32px auto; padding: 0 24px; }
+    /* ── CENTER SPOTLIGHT VIGNETTE EFFECT ── */
+    #spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 70% 65% at 50% 50%,
+        rgba(255, 255, 255, 0.22) 0%,
+        rgba(255, 240, 200, 0.14) 20%,
+        rgba(180, 130, 60, 0.06) 45%,
+        rgba(20, 15, 8, 0.55) 75%,
+        rgba(8, 5, 2, 0.88) 100%
+      );
+      pointer-events: none;
+      z-index: 60;
+    }
 
-        /* Stats Bar */
-        .stats-bar {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .stat-pill {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            color: var(--text-muted);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .stat-pill strong { color: var(--text-main); }
-        .stat-dot {
-            width: 7px; height: 7px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .dot-work       { background: #4f8ef7; }
-        .dot-personal   { background: #22c55e; }
-        .dot-promotions { background: #eab308; }
-        .dot-finance    { background: #f97316; }
-        .dot-spam       { background: #ef4444; }
+    /* ── HEADER / HUD ── */
+    header {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 60px;
+      background: rgba(12,8,4,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid rgba(180,130,60,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      z-index: 80;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.7);
+    }
 
-        /* Filter Tabs */
-        .filter-tabs {
-            display: flex;
-            gap: 6px;
-            flex-wrap: wrap;
-            margin-bottom: 24px;
-        }
-        .tab {
-            padding: 7px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 500;
-            border: 1px solid var(--card-border);
-            background: transparent;
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.18s ease;
-        }
-        .tab:hover { color: var(--text-main); background: rgba(255,255,255,0.05); }
-        .tab.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #fff;
-        }
-        .tab-divider {
-            width: 1px;
-            height: 28px;
-            background: var(--card-border);
-            align-self: center;
-            margin: 0 2px;
-        }
+    .brand {
+      display: flex; align-items: center; gap: 12px;
+      font-family: var(--font-board);
+      font-size: 20px;
+      color: #e8c97a;
+      letter-spacing: 1px;
+    }
+    .brand-pin {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e74c3c, #8b0000);
+      box-shadow: 0 0 8px rgba(231,76,60,0.7);
+    }
 
-        /* Email Cards */
-        .email-list { display: flex; flex-direction: column; gap: 14px; }
+    .header-right { display: flex; align-items: center; gap: 14px; }
 
-        .email-card {
-            background: var(--card-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--card-border);
-            border-radius: 14px;
-            padding: 18px 22px;
-            transition: transform 0.2s ease, border-color 0.2s ease;
-        }
-        .email-card:hover { transform: translateY(-2px); border-color: rgba(99,102,241,0.4); }
-        .email-card.unread { border-left: 4px solid var(--accent); }
+    .filter-select {
+      background: rgba(30,20,10,0.85);
+      border: 1px solid rgba(180,130,60,0.5);
+      color: #e8c97a;
+      font-family: var(--font-board);
+      font-size: 13px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .filter-select option { background: #1a1208; }
 
-        .card-top {
-            display: flex; align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        .card-top-left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-        .sender { font-size: 13px; color: var(--text-muted); font-weight: 500; }
-        .date-sent { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .btn-hdr {
+      font-family: var(--font-board);
+      font-size: 13px;
+      color: #c4a25a;
+      text-decoration: none;
+      padding: 5px 14px;
+      border: 1px solid rgba(180,130,60,0.45);
+      border-radius: 4px;
+      background: rgba(30,20,10,0.8);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .btn-hdr:hover:not(:disabled) { color: #fff; border-color: #e8c97a; background: rgba(180,130,60,0.2); }
+    .btn-hdr:disabled {
+      opacity: 0.35;
+      cursor: not-allowed !important;
+      border-color: rgba(120,90,40,0.25);
+    }
 
-        .subject {
-            font-size: 16px; font-weight: 600;
-            margin-bottom: 7px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .unread-dot {
-            width: 8px; height: 8px;
-            background: var(--accent); border-radius: 50%;
-            display: inline-block; flex-shrink: 0;
-        }
+    .pagination-cluster {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(20,12,6,0.85);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(180,130,60,0.4);
+    }
+    .btn-page {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      color: #e8c97a;
+      background: rgba(40,25,12,0.9);
+      border: 1px solid rgba(180,130,60,0.45);
+      padding: 4px 10px;
+      border-radius: 3px;
+      transition: all 0.2s ease;
+    }
+    .btn-page:hover:not(:disabled) {
+      background: rgba(180,130,60,0.3);
+      color: #fff;
+      border-color: #e8c97a;
+      box-shadow: 0 0 8px rgba(232,201,122,0.4);
+    }
+    .btn-page:disabled {
+      opacity: 0.25;
+      cursor: not-allowed !important;
+      border-color: rgba(100,70,30,0.2);
+    }
+    .page-indicator {
+      font-family: var(--font-board);
+      font-size: 12px;
+      color: #c4a25a;
+      min-width: 58px;
+      text-align: center;
+    }
 
-        .snippet { font-size: 13px; color: #d1d5db; line-height: 1.5; margin-bottom: 12px; }
+    .stat-strip {
+      display: flex; align-items: center; gap: 16px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: #8a7040;
+      letter-spacing: 0.5px;
+    }
+    .stat-strip strong { color: #e8c97a; }
 
-        /* Urgency / Deadline */
-        .deadline-box {
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px dashed var(--card-border);
-            border-radius: 10px;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 10px;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .deadline-info { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-        .urgency-badge {
-            padding: 3px 9px; border-radius: 6px;
-            font-size: 10px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.5px;
-        }
-        .badge-overdue  { background: rgba(239,68,68,0.2);  color: var(--badge-overdue);  border: 1px solid var(--badge-overdue); }
-        .badge-urgent   { background: rgba(249,115,22,0.2); color: var(--badge-urgent);   border: 1px solid var(--badge-urgent); }
-        .badge-soon     { background: rgba(234,179,8,0.2);  color: var(--badge-soon);     border: 1px solid var(--badge-soon); }
-        .badge-upcoming { background: rgba(16,185,129,0.2); color: var(--badge-upcoming); border: 1px solid var(--badge-upcoming); }
-        .context-quote  { font-size: 12px; font-style: italic; color: #9ca3af; }
+    /* ── BOARD CANVAS ── */
+    #canvas {
+      position: absolute;
+      top: 60px; left: 0; right: 0; bottom: 0;
+      overflow: auto;
+      z-index: 10;
+    }
 
-        /* Category Badges */
-        .cat-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-            font-family: 'JetBrains Mono', monospace;
-            white-space: nowrap;
-            vertical-align: middle;
-        }
-        .cat-work       { background: rgba(79,142,247,0.12); color: #4f8ef7; border: 1px solid #4f8ef7; }
-        .cat-personal   { background: rgba(34,197,94,0.12);  color: #22c55e; border: 1px solid #22c55e; }
-        .cat-promotions { background: rgba(234,179,8,0.12);  color: #eab308; border: 1px solid #eab308; }
-        .cat-finance    { background: rgba(249,115,22,0.12); color: #f97316; border: 1px solid #f97316; }
-        .cat-spam       { background: rgba(239,68,68,0.12);  color: #ef4444; border: 1px solid #ef4444; }
+    #canvas-inner {
+      position: relative;
+      min-width: 100%;
+      min-height: 100%;
+    }
 
-        .loading-state, .error-state {
-            text-align: center; padding: 60px 0; color: var(--text-muted);
-        }
-        .spinner {
-            width: 36px; height: 36px;
-            border: 3px solid rgba(255,255,255,0.1);
-            border-radius: 50%; border-top-color: var(--accent);
-            animation: spin 1s linear infinite;
-            margin: 0 auto 16px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+    /* ── STRING SVG ── */
+    #strings {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 25;
+      overflow: visible;
+    }
 
-        .result-count {
-            font-size: 12px; color: var(--text-muted);
-            margin-bottom: 14px;
-        }
-    </style>
+    .red-rope {
+      pointer-events: stroke;
+      stroke: var(--red);
+      stroke-width: 2.2px;
+      fill: none;
+      stroke-opacity: 0.82;
+      stroke-linecap: round;
+      cursor: pointer;
+      transition: stroke 0.2s ease, stroke-width 0.2s ease, stroke-opacity 0.2s ease, filter 0.2s ease;
+    }
+    .red-rope:hover {
+      stroke: var(--red-bright);
+      stroke-width: 3.8px;
+      stroke-opacity: 1;
+      filter: drop-shadow(0 0 8px rgba(255, 50, 50, 0.9));
+    }
+    .red-rope.active-rope {
+      stroke: #ff4444;
+      stroke-width: 3.5px;
+      stroke-opacity: 1;
+      filter: drop-shadow(0 0 10px rgba(255, 68, 68, 0.95));
+    }
+
+    /* ── STICKY NOTE (JUMBLED ORGANIC LAYOUT) ── */
+    .note {
+      position: absolute;
+      width: 160px;
+      min-height: 135px;
+      padding: 24px 12px 14px;
+      font-family: var(--font-board);
+      font-size: 12px;
+      color: #1a1208;
+      text-align: center;
+      line-height: 1.35;
+      cursor: pointer;
+      user-select: none;
+      transform-origin: 50% 8px;
+      border-radius: 1px 1px 3px 3px;
+      box-shadow: 4px 6px 20px rgba(0,0,0,0.7), inset 0 -3px 6px rgba(0,0,0,0.08);
+      transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.25s ease;
+    }
+    .note::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 7px;
+      background: rgba(0,0,0,0.13);
+      border-radius: 1px 1px 0 0;
+    }
+    .note:hover {
+      box-shadow: 8px 16px 36px rgba(0,0,0,0.92), inset 0 -3px 6px rgba(0,0,0,0.08);
+      z-index: 60 !important;
+      transform: scale(1.08) rotate(0deg) !important;
+    }
+
+    .note-pin {
+      position: absolute;
+      top: -7px; left: 50%;
+      transform: translateX(-50%);
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e74c3c, #8b0000);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.8);
+      z-index: 5;
+    }
+    .note-pin::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.45);
+    }
+
+    .note-sender {
+      font-size: 10px;
+      color: #3a2a10;
+      opacity: 0.75;
+      margin-bottom: 5px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .note-subject {
+      font-size: 12.5px;
+      font-weight: bold;
+      color: #1a1208;
+      line-height: 1.3;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+    .note-snippet {
+      font-size: 10px;
+      color: #4a3820;
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .note-click-hint {
+      margin-top: 6px;
+      font-size: 8.5px;
+      color: #7a5a20;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .note:hover .note-click-hint { opacity: 1; }
+
+    .note-footer {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+    .badge-overdue  { background: rgba(180,0,0,0.25);   color: #c0392b; border: 1px solid #c0392b; }
+    .badge-urgent   { background: rgba(180,100,0,0.25); color: #d4770a; border: 1px solid #d4770a; }
+    .badge-soon     { background: rgba(150,120,0,0.25); color: #8a7010; border: 1px solid #8a7010; }
+    .badge-upcoming { background: rgba(0,100,60,0.2);   color: #1a6040; border: 1px solid #1a6040; }
+
+    .badge-cat {
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 3px;
+      background: rgba(0,0,0,0.12);
+      color: #3a2a10;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+
+    .unread-marker {
+      position: absolute;
+      top: 9px; right: 9px;
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: #c0392b;
+      box-shadow: 0 0 8px #c0392b;
+    }
+
+    /* Flutter / wave animation on click */
+    @keyframes noteWave {
+      0%   { transform: rotate(var(--rot)); }
+      10%  { transform: rotate(calc(var(--rot) + 9deg)); }
+      26%  { transform: rotate(calc(var(--rot) - 7deg)); }
+      40%  { transform: rotate(calc(var(--rot) + 4.5deg)); }
+      55%  { transform: rotate(calc(var(--rot) - 2.5deg)); }
+      70%  { transform: rotate(calc(var(--rot) + 1.2deg)); }
+      85%  { transform: rotate(calc(var(--rot) - 0.5deg)); }
+      100% { transform: rotate(var(--rot)); }
+    }
+    .note.waving { animation: noteWave 0.85s cubic-bezier(0.25,0.46,0.45,0.94) forwards; }
+
+    /* Air rush / breeze scroll wiggle animation */
+    @keyframes scrollAirWiggle {
+      0%   { transform: rotate(var(--rot)) translateY(0); }
+      18%  { transform: rotate(calc(var(--rot) + var(--wiggle-dir, 5deg))) translateY(-3px); }
+      40%  { transform: rotate(calc(var(--rot) - var(--wiggle-dir, 4deg))) translateY(2px); }
+      65%  { transform: rotate(calc(var(--rot) + 2deg)) translateY(-1px); }
+      85%  { transform: rotate(calc(var(--rot) - 1deg)) translateY(0); }
+      100% { transform: rotate(var(--rot)) translateY(0); }
+    }
+    .note.scroll-breeze {
+      animation: scrollAirWiggle 0.55s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+    }
+
+    /* Staggered page note entrance animation */
+    @keyframes noteDropIn {
+      0% {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.92) rotate(calc(var(--rot) * 0.5));
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(2px) scale(1.02) rotate(var(--rot));
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1) rotate(var(--rot));
+      }
+    }
+    .note.drop-in {
+      animation: noteDropIn 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94) backwards;
+    }
+
+    #canvas-inner {
+      transition: opacity 0.25s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .note.waving, .note.scroll-breeze, .note.drop-in { animation: none; opacity: 0.7; }
+    }
+
+    /* ── DOSSIER CASE FILE MODAL ── */
+    #dossier-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 6, 2, 0.82);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 20px;
+    }
+    #dossier-modal.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .dossier-folder {
+      position: relative;
+      width: 100%;
+      max-width: 680px;
+      max-height: 85vh;
+      background: var(--paper);
+      border-radius: 4px;
+      box-shadow:
+        0 25px 70px rgba(0,0,0,0.9),
+        0 0 0 1px rgba(0,0,0,0.3),
+        inset 0 0 40px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      transform: translateY(20px) scale(0.95);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      overflow: hidden;
+      color: #1a1208;
+      font-family: var(--font-board);
+    }
+    #dossier-modal.open .dossier-folder {
+      transform: translateY(0) scale(1);
+    }
+
+    .dossier-pin {
+      position: absolute;
+      top: -8px; left: 50%;
+      transform: translateX(-50%);
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e74c3c, #8b0000);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.8);
+      z-index: 10;
+    }
+    .dossier-pin::after {
+      content: '';
+      position: absolute;
+      top: 4px; left: 4px;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.5);
+    }
+
+    .dossier-header {
+      padding: 24px 28px 16px;
+      border-bottom: 2px dashed rgba(120,90,40,0.35);
+      background: rgba(212, 201, 168, 0.95);
+    }
+    .dossier-stamp {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      color: #c0392b;
+      border: 2px solid #c0392b;
+      padding: 2px 8px;
+      border-radius: 3px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      transform: rotate(-2deg);
+      margin-bottom: 12px;
+    }
+    .dossier-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1a1208;
+      line-height: 1.3;
+      margin-bottom: 10px;
+    }
+    .dossier-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      font-size: 12px;
+      color: #4a3820;
+      font-family: var(--font-board);
+    }
+    .dossier-meta span { display: flex; align-items: center; gap: 4px; }
+    .dossier-meta strong { color: #1a1208; }
+
+    .dossier-deadline-box {
+      margin: 16px 28px 0;
+      background: rgba(192, 57, 43, 0.08);
+      border: 1px solid rgba(192, 57, 43, 0.3);
+      border-left: 4px solid #c0392b;
+      padding: 10px 14px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: #2c1f0e;
+    }
+    .dossier-deadline-box strong { color: #c0392b; }
+
+    .dossier-body {
+      padding: 20px 28px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #2a1e10;
+      white-space: pre-wrap;
+      word-break: break-word;
+      background-image: repeating-linear-gradient(180deg, transparent 0, transparent 23px, rgba(0,0,0,0.06) 23px, rgba(0,0,0,0.06) 24px);
+      background-position: 0 10px;
+    }
+
+    .dossier-footer {
+      padding: 16px 28px;
+      border-top: 2px dashed rgba(120,90,40,0.35);
+      background: rgba(200, 188, 150, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .dossier-close-btn {
+      font-family: var(--font-board);
+      font-size: 13px;
+      color: #1a1208;
+      background: #c8b488;
+      border: 1px solid #8b7040;
+      padding: 8px 20px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-weight: bold;
+    }
+    .dossier-close-btn:hover {
+      background: #1a1208;
+      color: #e8c97a;
+      border-color: #1a1208;
+    }
+
+    /* ── LOADING / EMPTY ── */
+    #status-overlay {
+      position: absolute;
+      top: 60px; left: 0; right: 0; bottom: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 70;
+      pointer-events: none;
+    }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(200,160,60,0.2);
+      border-top-color: #c8a03c;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin-bottom: 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .status-text {
+      font-family: var(--font-board);
+      font-size: 16px;
+      color: #c8a03c;
+      letter-spacing: 1px;
+      opacity: 0.85;
+    }
+    #status-overlay.hidden { display: none; }
+
+    /* ── DECORATIVE CLIPPINGS ── */
+    .clipping {
+      position: absolute;
+      background: var(--paper);
+      box-shadow: 3px 5px 16px rgba(0,0,0,0.6);
+      overflow: hidden;
+      z-index: 5;
+      border-radius: 1px;
+    }
+    .clipping::before {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: repeating-linear-gradient(180deg, transparent 0, transparent 9px, rgba(0,0,0,0.16) 9px, rgba(0,0,0,0.16) 10px);
+      background-position: 0 18px;
+    }
+    .clipping-hdr { width: 60%; height: 8px; background: rgba(0,0,0,0.28); margin: 12px auto 0; border-radius: 2px; }
+
+    /* ── CLUES SIDEBAR / EVIDENCE DOCKET ── */
+    .clues-sidebar {
+      position: fixed;
+      top: 60px;
+      right: 0;
+      bottom: 0;
+      width: 390px;
+      max-width: 90vw;
+      background: linear-gradient(180deg, #1c1308 0%, #130c04 100%);
+      border-left: 2px solid rgba(180, 130, 60, 0.6);
+      box-shadow: -10px 0 35px rgba(0, 0, 0, 0.85);
+      z-index: 85;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: var(--font-board);
+    }
+    .clues-sidebar.open {
+      transform: translateX(0);
+    }
+
+    /* Floating Tab on Right Edge */
+    .clues-floating-tab {
+      position: fixed;
+      top: 120px;
+      right: 0;
+      background: rgba(28, 18, 8, 0.95);
+      border: 1px solid rgba(180, 130, 60, 0.7);
+      border-right: none;
+      border-radius: 6px 0 0 6px;
+      padding: 12px 7px;
+      color: #e8c97a;
+      font-family: var(--font-board);
+      font-size: 11px;
+      cursor: pointer;
+      z-index: 75;
+      box-shadow: -4px 4px 15px rgba(0,0,0,0.6);
+      writing-mode: vertical-rl;
+      letter-spacing: 2px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .clues-floating-tab:hover {
+      background: rgba(180, 130, 60, 0.3);
+      color: #fff;
+      padding-right: 11px;
+    }
+    .clues-floating-tab.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateX(100%);
+    }
+
+    /* Sidebar Header */
+    .clues-sidebar-hdr {
+      padding: 16px 18px 12px;
+      background: rgba(10, 7, 3, 0.75);
+      border-bottom: 2px dashed rgba(180, 130, 60, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .clues-sidebar-title {
+      font-size: 14px;
+      color: #e8c97a;
+      letter-spacing: 1px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .clues-sidebar-close {
+      background: rgba(30,20,10,0.8);
+      border: 1px solid rgba(180, 130, 60, 0.5);
+      color: #c4a25a;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-family: var(--font-board);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .clues-sidebar-close:hover {
+      background: #c0392b;
+      border-color: #c0392b;
+      color: #fff;
+    }
+
+    /* Search & Filter within Sidebar */
+    .clues-search-box {
+      padding: 12px 16px;
+      background: rgba(16, 11, 5, 0.9);
+      border-bottom: 1px solid rgba(180, 130, 60, 0.25);
+    }
+    .clues-search-input {
+      width: 100%;
+      background: rgba(8, 5, 2, 0.8);
+      border: 1px solid rgba(180, 130, 60, 0.45);
+      color: #f5e642;
+      padding: 7px 10px;
+      border-radius: 4px;
+      font-family: var(--font-board);
+      font-size: 12.5px;
+      outline: none;
+    }
+    .clues-search-input:focus {
+      border-color: #e8c97a;
+      box-shadow: 0 0 8px rgba(232, 201, 122, 0.35);
+    }
+    .clues-filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 8px;
+    }
+    .clue-pill {
+      font-size: 10.5px;
+      padding: 3px 7px;
+      border-radius: 3px;
+      background: rgba(30, 20, 10, 0.8);
+      border: 1px solid rgba(180, 130, 60, 0.3);
+      color: #c4a25a;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: var(--font-board);
+    }
+    .clue-pill.active, .clue-pill:hover {
+      background: rgba(180, 130, 60, 0.3);
+      border-color: #e8c97a;
+      color: #fff;
+    }
+
+    /* Scrollable Clues List */
+    .clues-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .clues-list::-webkit-scrollbar { width: 6px; }
+    .clues-list::-webkit-scrollbar-thumb { background: rgba(180, 130, 60, 0.4); border-radius: 3px; }
+
+    .clue-card {
+      background: var(--paper-bg, #d4c9a8);
+      color: #1a1208;
+      border-radius: 3px;
+      padding: 10px 12px;
+      box-shadow: 2px 3px 10px rgba(0,0,0,0.55);
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+      border-left: 4px solid var(--cork, #7a5c30);
+      position: relative;
+      user-select: none;
+      text-align: left;
+    }
+    .clue-card:hover {
+      transform: translateX(-4px);
+      box-shadow: 4px 6px 16px rgba(0,0,0,0.7);
+      background: #e4d8b4;
+    }
+    .clue-card.has-deadline {
+      border-left-color: var(--red, #c0392b);
+    }
+    .clue-card.urgent {
+      border-left-color: #e74c3c;
+      background: #eee0bf;
+    }
+    .clue-card-hdr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10.5px;
+      margin-bottom: 3px;
+      opacity: 0.85;
+    }
+    .clue-stamp {
+      font-weight: bold;
+      color: #8b0000;
+      letter-spacing: 0.5px;
+    }
+    .clue-date {
+      font-size: 10px;
+      color: #4a3820;
+    }
+    .clue-subject {
+      font-size: 12.5px;
+      font-weight: bold;
+      line-height: 1.25;
+      margin-bottom: 3px;
+      color: #1a1208;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .clue-sender {
+      font-size: 11px;
+      color: #3b2a14;
+      margin-bottom: 5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .clue-deadline-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(192, 57, 43, 0.15);
+      border: 1px solid rgba(192, 57, 43, 0.4);
+      color: #8b0000;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10.5px;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .clue-snippet {
+      font-size: 10.5px;
+      color: #4a3820;
+      line-height: 1.3;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 5px;
+    }
+    .clue-card-ftr {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      border-top: 1px dashed rgba(120, 90, 40, 0.35);
+      padding-top: 4px;
+      margin-top: 4px;
+    }
+    .clue-cat-name {
+      font-weight: 600;
+      color: #5a4220;
+    }
+    .clue-action-hint {
+      color: #8b0000;
+      font-style: italic;
+    }
+
+    /* Sidebar Footer */
+    .clues-sidebar-ftr {
+      padding: 10px 16px;
+      background: rgba(10, 7, 3, 0.85);
+      border-top: 1px solid rgba(180, 130, 60, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 11.5px;
+      color: #c4a25a;
+    }
+    .clues-quick-act {
+      background: rgba(180, 130, 60, 0.2);
+      border: 1px solid rgba(180, 130, 60, 0.45);
+      color: #e8c97a;
+      font-family: var(--font-board);
+      font-size: 11px;
+      padding: 4px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .clues-quick-act:hover {
+      background: rgba(180, 130, 60, 0.4);
+      color: #fff;
+    }
+    .clues-empty-state {
+      text-align: center;
+      padding: 30px 10px;
+      color: #c4a25a;
+      font-size: 13px;
+      opacity: 0.8;
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <div class="brand">
-            <div class="brand-icon">📬</div>
-            MailWatch
-        </div>
-        <a href="/logout" class="btn-logout">Logout</a>
-    </header>
+<div id="board">
+  <div id="cork"></div>
 
-    <div class="container">
+  <!-- Decorative background clippings -->
+  <div class="clipping" style="width:130px;height:170px;top:80px;left:20px;transform:rotate(-5deg);">
+    <div class="note-pin"></div><div class="clipping-hdr"></div>
+  </div>
+  <div class="clipping" style="width:145px;height:155px;top:90px;right:22px;transform:rotate(6deg);">
+    <div class="note-pin"></div><div class="clipping-hdr"></div>
+  </div>
+  <div class="clipping" style="width:120px;height:140px;bottom:60px;right:30px;transform:rotate(-4deg);">
+    <div class="note-pin"></div><div class="clipping-hdr"></div>
+  </div>
 
-        <!-- Stats Bar -->
-        <div class="stats-bar" id="stats-bar">
-            <div class="stat-pill">Total: <strong id="total-count">0</strong></div>
-            <div class="stat-pill">📅 Deadlines: <strong id="deadline-count">0</strong></div>
-            <div class="stat-pill"><span class="stat-dot dot-work"></span> Work: <strong id="count-work">0</strong></div>
-            <div class="stat-pill"><span class="stat-dot dot-personal"></span> Personal: <strong id="count-personal">0</strong></div>
-            <div class="stat-pill"><span class="stat-dot dot-promotions"></span> Promos: <strong id="count-promotions">0</strong></div>
-            <div class="stat-pill"><span class="stat-dot dot-finance"></span> Finance: <strong id="count-finance">0</strong></div>
-            <div class="stat-pill"><span class="stat-dot dot-spam"></span> Spam: <strong id="count-spam">0</strong></div>
-        </div>
-
-        <!-- Filter Tabs -->
-        <div class="filter-tabs">
-            <button class="tab active" data-filter="all">All</button>
-            <button class="tab" data-filter="deadlines">📅 Deadlines</button>
-            <button class="tab" data-filter="unread">🔵 Unread</button>
-            <div class="tab-divider"></div>
-            <button class="tab" data-filter="work">📁 Work</button>
-            <button class="tab" data-filter="personal">👤 Personal</button>
-            <button class="tab" data-filter="promotions">🛍️ Promos</button>
-            <button class="tab" data-filter="finance">💰 Finance</button>
-            <button class="tab" data-filter="spam">🚫 Spam</button>
-        </div>
-
-        <div id="result-count" class="result-count"></div>
-        <div id="content-area">
-            <div class="loading-state">
-                <div class="spinner"></div>
-                <p>Scanning Gmail Inbox with spaCy &amp; Regex NER...</p>
-            </div>
-        </div>
+  <!-- Header -->
+  <header>
+    <div class="brand">
+      <div class="brand-pin"></div>
+      MailWatch — Investigation Board
     </div>
+    <div class="stat-strip">
+      <span>Total: <strong id="st-total">—</strong></span>
+      <span>Deadlines: <strong id="st-dead">—</strong></span>
+      <span>Unread: <strong id="st-unread">—</strong></span>
+    </div>
+    <div class="header-right">
+      <button class="btn-hdr" id="btn-toggle-clues" title="Toggle Clues Sidebar (Shortcut: C or Ctrl+B)">📂 Clues (<span id="st-clues-badge">0</span>)</button>
 
-    <script>
-        const catIcon  = { work: '📁', personal: '👤', promotions: '🛍️', finance: '💰', spam: '🚫' };
-        const catLabel = { work: 'Work', personal: 'Personal', promotions: 'Promos', finance: 'Finance', spam: 'Spam' };
-        const categoryFilters = ['work', 'personal', 'promotions', 'finance', 'spam'];
+      <select class="filter-select" id="filter-sel">
+        <option value="all">All Clues</option>
+        <option value="deadlines">📅 Deadlines</option>
+        <option value="unread">🔵 Unread</option>
+        <option value="work">📁 Work</option>
+        <option value="personal">👤 Personal</option>
+        <option value="promotions">🛍️ Promos</option>
+        <option value="finance">💰 Finance</option>
+        <option value="spam">🚫 Spam</option>
+      </select>
 
-        let allEmails = [];
-        let activeFilter = 'all';
+      <!-- Pagination Navigation (First 30 <-> Next 30) -->
+      <div class="pagination-cluster">
+        <button class="btn-page" id="btn-prev" title="Previous 30 Evidence" disabled>&larr;</button>
+        <span class="page-indicator" id="page-label">Page 1</span>
+        <button class="btn-page" id="btn-next" title="Next 30 Evidence" disabled>&rarr;</button>
+      </div>
 
-        async function fetchEmails() {
-            const contentArea = document.getElementById('content-area');
-            try {
-                const res = await fetch('/api/emails');
-                if (!res.ok) {
-                    if (res.status === 401) { window.location.href = '/login'; return; }
-                    throw new Error(`HTTP error! status: ${res.status}`);
-                }
-                const data = await res.json();
-                if (data.error) {
-                    contentArea.innerHTML = `<div class="error-state"><p>⚠️ ${escapeHtml(data.error)}</p></div>`;
-                    return;
-                }
-                allEmails = data;
-                updateStats();
-                renderAll();
-            } catch (err) {
-                contentArea.innerHTML = `<div class="error-state"><p>⚠️ Error loading emails: ${err.message}</p></div>`;
-            }
+      <a href="/logout" class="btn-hdr">Leave Room</a>
+    </div>
+  </header>
+
+  <!-- Board canvas -->
+  <div id="canvas">
+    <div id="canvas-inner">
+      <svg id="strings"></svg>
+    </div>
+  </div>
+
+  <!-- Status overlay -->
+  <div id="status-overlay">
+    <div class="spinner"></div>
+    <div class="status-text">Scanning the evidence...</div>
+  </div>
+
+  <!-- Spotlight -->
+  <div id="spotlight"></div>
+
+  <!-- Interactive Cursor Distortion Ripple Canvas -->
+  <canvas id="distortion-canvas" style="position: absolute; inset: 0; pointer-events: none; z-index: 15; mix-blend-mode: overlay; opacity: 0.85;"></canvas>
+</div>
+
+<!-- ── FLOATING CLUES SIDEBAR TAB ── -->
+<button id="clues-tab" class="clues-floating-tab" title="Open Clues Sidebar" aria-label="Open Clues Sidebar">
+  <span>📂 CLUES DOCKET</span>
+</button>
+
+<!-- ── CLUES SIDEBAR DRAWER ── -->
+<aside id="clues-sidebar" class="clues-sidebar" aria-label="Evidence and Clues Docket">
+  <div class="clues-sidebar-hdr">
+    <div class="brand-pin"></div>
+    <div class="clues-sidebar-title">EVIDENCE &amp; CLUES DOCKET</div>
+    <button class="clues-sidebar-close" id="clues-close-btn" title="Close Sidebar (Esc)">✕ CLOSE</button>
+  </div>
+  <div class="clues-search-box">
+    <input type="text" id="clue-search" class="clues-search-input" placeholder="Search clues, sender, subject..." aria-label="Search Clues">
+    <div class="clues-filter-pills" id="clues-pills">
+      <button class="clue-pill active" data-clue-filter="all">All</button>
+      <button class="clue-pill" data-clue-filter="deadlines">📅 Deadlines</button>
+      <button class="clue-pill" data-clue-filter="unread">🔵 Unread</button>
+      <button class="clue-pill" data-clue-filter="work">📁 Work</button>
+      <button class="clue-pill" data-clue-filter="finance">💰 Finance</button>
+      <button class="clue-pill" data-clue-filter="personal">👤 Personal</button>
+    </div>
+  </div>
+  <div class="clues-list" id="clues-list" role="region" aria-live="polite">
+    <!-- Clue item cards rendered dynamically -->
+  </div>
+  <div class="clues-sidebar-ftr">
+    <span id="clues-counter">0 clues cataloged</span>
+    <button class="clues-quick-act" id="btn-jump-urgent">⚡ Next Urgent</button>
+  </div>
+</aside>
+
+<!-- ── CASE FILE DOSSIER MODAL ── -->
+<div id="dossier-modal">
+  <div class="dossier-folder">
+    <div class="dossier-pin"></div>
+    <div class="dossier-header">
+      <div class="dossier-stamp" id="modal-stamp">EVIDENCE #001</div>
+      <div class="dossier-title" id="modal-title">Subject Line</div>
+      <div class="dossier-meta">
+        <span>From: <strong id="modal-sender">Sender Name</strong></span>
+        <span>Date: <strong id="modal-date">Date</strong></span>
+        <span>Category: <strong id="modal-cat">Category</strong></span>
+      </div>
+    </div>
+    <div id="modal-deadline-container"></div>
+    <div class="dossier-body" id="modal-body">
+      Email body text will appear here...
+    </div>
+    <div class="dossier-footer">
+      <div style="font-size: 11px; color: #5a4828;" id="modal-urgency-note"></div>
+      <button class="dossier-close-btn" id="modal-close-btn">📁 CLOSE CASE FILE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+const catIcon  = { work:'📁', personal:'👤', promotions:'🛍️', finance:'💰', spam:'🚫' };
+const noteColors = ['var(--note-y1)', 'var(--note-y2)', 'var(--note-y3)', 'var(--note-pink)', 'var(--note-blue)'];
+const catFilters = ['work','personal','promotions','finance','spam'];
+
+let allEmails = [];
+let activeFilter = 'all';
+
+/* ── Escape HTML ── */
+function esc(s) {
+  if (!s) return '';
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── JUMBLED ORGANIC LAYOUT WITH DYNAMIC NOTE SIZES & BOUNDS ── */
+function placeNotes(emails) {
+  const canvas = document.getElementById('canvas');
+  const W = Math.max(360, canvas.clientWidth);
+  const H = canvas.clientHeight;
+
+  // Responsive column count
+  const cols = Math.max(2, Math.min(5, Math.floor((W - 40) / 210)));
+  const cellW = (W - 40) / cols;
+  const rows = Math.ceil(emails.length / cols);
+  const cellH = 220;
+
+  let maxY = 0;
+
+  const layouts = emails.map((e, i) => {
+    const col = i % cols;
+    const row = Math.floor(i / cols);
+
+    // Randomized note dimensions
+    const width = 155 + Math.floor(Math.random() * 35); // 155px to 190px
+    const minHeight = 135 + Math.floor(Math.random() * 30); // 135px to 165px
+
+    // Organic position jitter within its grid cell
+    const jx = (Math.random() - 0.5) * (cellW * 0.35);
+    const jy = (Math.random() - 0.5) * 28;
+
+    let x = 20 + col * cellW + (cellW - width) / 2 + jx;
+    let y = 30 + row * cellH + jy;
+
+    // Strict boundary clamping so notes never cut off on screen edges
+    x = Math.max(16, Math.min(W - width - 20, x));
+    y = Math.max(24, y);
+
+    if (y + minHeight > maxY) {
+      maxY = y + minHeight;
+    }
+
+    // Organic rotation: -13deg to +13deg
+    const rot = (Math.random() - 0.5) * 26;
+    const zIndex = 20 + Math.floor(Math.random() * 25);
+
+    return { email: e, x, y, width, minHeight, rot, zIndex, row, col };
+  });
+
+  const totalHeight = Math.max(H, maxY + 90);
+  const inner = document.getElementById('canvas-inner');
+  const svg = document.getElementById('strings');
+  inner.style.height = totalHeight + 'px';
+  svg.style.height = totalHeight + 'px';
+  svg.setAttribute('height', totalHeight);
+  svg.setAttribute('width', W);
+
+  return layouts;
+}
+
+/* ── Render a single note element ── */
+function makeNote(layout, idx) {
+  const { email: e, x, y, width, minHeight, rot, zIndex } = layout;
+  const color = noteColors[idx % noteColors.length];
+  const note  = document.createElement('div');
+  note.className = 'note drop-in';
+  note.id = `note-${idx}`;
+  note.style.cssText = `
+    left:${x}px; top:${y}px;
+    width:${width}px;
+    min-height:${minHeight}px;
+    background:${color};
+    transform:rotate(${rot.toFixed(1)}deg);
+    --rot:${rot.toFixed(1)}deg;
+    z-index:${zIndex};
+    animation-delay:${(idx * 0.025).toFixed(3)}s;
+  `;
+
+  const senderShort = esc(e.sender).replace(/<.*?>/,'').trim().slice(0, 30);
+  const subj        = esc(e.subject || '(No Subject)').slice(0, 55);
+  const snippet     = esc(e.snippet).slice(0, 85);
+  const badgeClass  = e.urgency ? `badge badge-${e.urgency}` : '';
+  const catBadge    = `<span class="badge-cat">${catIcon[e.category]||''} ${esc(e.category)}</span>`;
+
+  note.innerHTML = `
+    <div class="note-pin"></div>
+    ${e.unread ? '<div class="unread-marker"></div>' : ''}
+    <div class="note-sender">${senderShort}</div>
+    <div class="note-subject">${subj}</div>
+    <div class="note-snippet">${snippet}</div>
+    <div class="note-click-hint">🔍 Inspect Evidence</div>
+    <div class="note-footer">
+      ${catBadge}
+      ${e.deadline ? `<span class="${badgeClass}">${e.deadline}</span>` : ''}
+      ${e.urgency  ? `<span class="${badgeClass}">${e.urgency}</span>`  : ''}
+    </div>
+  `;
+
+  // Highlight connected red ropes on hover
+  note.addEventListener('mouseenter', () => highlightNoteRopes(idx, true));
+  note.addEventListener('mouseleave', () => highlightNoteRopes(idx, false));
+
+  note.addEventListener('click', () => {
+    note.classList.remove('waving', 'scroll-breeze');
+    void note.offsetWidth;
+    note.classList.add('waving');
+    openDossier(e, idx);
+  });
+  note.addEventListener('animationend', (ev) => {
+    if (ev.animationName === 'noteWave' || ev.animationName === 'scrollAirWiggle') {
+      note.classList.remove('waving', 'scroll-breeze');
+    }
+  });
+
+  return note;
+}
+
+/* ── INTERACTIVE RED ROPE WEB ENGINE ── */
+let currentRopePaths = [];
+
+function drawStrings(layouts) {
+  const svg = document.getElementById('strings');
+  svg.innerHTML = '';
+  currentRopePaths = [];
+
+  if (layouts.length < 2) return;
+
+  const links = [];
+  const added = new Set();
+  function addLink(a, b) {
+    if (a === b || a < 0 || b < 0 || a >= layouts.length || b >= layouts.length) return;
+    const key = a < b ? `${a}-${b}` : `${b}-${a}`;
+    if (!added.has(key)) {
+      added.add(key);
+      links.push([a, b]);
+    }
+  }
+
+  // 1. Deadline chain
+  const deadlineIdxs = layouts.map((l, i) => l.email.deadline ? i : -1).filter(i => i !== -1);
+  for (let i = 0; i < deadlineIdxs.length - 1; i++) {
+    addLink(deadlineIdxs[i], deadlineIdxs[i + 1]);
+  }
+
+  // 2. Category links (connect spatially nearby notes with same category)
+  const catMap = {};
+  layouts.forEach((l, i) => {
+    const c = l.email.category || 'other';
+    if (!catMap[c]) catMap[c] = [];
+    catMap[c].push(i);
+  });
+  Object.values(catMap).forEach(group => {
+    if (group.length >= 2) {
+      for (let k = 0; k < group.length - 1; k++) {
+        const a = group[k];
+        const b = group[k + 1];
+        // Only link if within 2 rows of each other to avoid crazy giant spanning lines
+        if (Math.abs(layouts[a].row - layouts[b].row) <= 2) {
+          addLink(a, b);
         }
+      }
+    }
+  });
 
-        function updateStats() {
-            document.getElementById('total-count').textContent = allEmails.length;
-            document.getElementById('deadline-count').textContent = allEmails.filter(e => e.deadline).length;
-            ['work','personal','promotions','finance','spam'].forEach(c => {
-                document.getElementById('count-' + c).textContent = allEmails.filter(e => e.category === c).length;
-            });
-        }
+  // 3. Natural evidence neighbor linkages (adjacent nodes)
+  for (let i = 0; i < layouts.length - 1; i += 2) {
+    if (Math.random() > 0.4) {
+      addLink(i, i + 1);
+    }
+  }
 
-        function renderAll() {
-            let emails = [...allEmails];
+  // Render SVG Bezier red ropes
+  links.forEach(([aIdx, bIdx]) => {
+    const lA = layouts[aIdx];
+    const lB = layouts[bIdx];
+    if (!lA || !lB) return;
 
-            if (activeFilter === 'deadlines') {
-                emails = emails.filter(e => e.deadline);
-            } else if (activeFilter === 'unread') {
-                emails = emails.filter(e => e.unread);
-            } else if (categoryFilters.includes(activeFilter)) {
-                emails = emails.filter(e => e.category === activeFilter);
-            }
+    const pA = { x: lA.x + (lA.width ? lA.width / 2 : 80), y: lA.y + 7 };
+    const pB = { x: lB.x + (lB.width ? lB.width / 2 : 80), y: lB.y + 7 };
 
-            const resultCount = document.getElementById('result-count');
-            resultCount.textContent = emails.length === allEmails.length
-                ? `${emails.length} emails`
-                : `${emails.length} of ${allEmails.length} emails`;
+    // Natural curved sag
+    const dx = pB.x - pA.x;
+    const dy = pB.y - pA.y;
+    const dist = Math.hypot(dx, dy);
+    const sag = Math.min(45, Math.max(15, dist * 0.12));
 
-            const contentArea = document.getElementById('content-area');
-            if (emails.length === 0) {
-                contentArea.innerHTML = '<div class="error-state"><p>No emails match this filter.</p></div>';
-                return;
-            }
-            contentArea.innerHTML = `<div class="email-list">${emails.map(renderEmail).join('')}</div>`;
-        }
+    const midX = (pA.x + pB.x) / 2 + (Math.random() - 0.5) * 20;
+    const midY = (pA.y + pB.y) / 2 + sag + (Math.random() - 0.5) * 10;
 
-        function renderEmail(e) {
-            const badgeClass = e.urgency ? `badge-${e.urgency}` : '';
-            const dateFormatted = e.date ? new Date(e.date).toLocaleString() : '';
-            const cat = e.category || 'personal';
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${pA.x.toFixed(1)} ${pA.y.toFixed(1)} Q ${midX.toFixed(1)} ${midY.toFixed(1)} ${pB.x.toFixed(1)} ${pB.y.toFixed(1)}`);
+    path.setAttribute('class', 'red-rope');
+    path.setAttribute('stroke-dasharray', `${4 + Math.floor(Math.random()*4)} ${2 + Math.floor(Math.random()*2)}`);
+    path.dataset.a = aIdx;
+    path.dataset.b = bIdx;
+    path.dataset.pax = pA.x;
+    path.dataset.pay = pA.y;
+    path.dataset.pbx = pB.x;
+    path.dataset.pby = pB.y;
+    path.dataset.midx = midX;
+    path.dataset.midy = midY;
 
-            return `
-                <div class="email-card ${e.unread ? 'unread' : ''}">
-                    <div class="card-top">
-                        <div class="card-top-left">
-                            <span class="sender">${escapeHtml(e.sender)}</span>
-                            <span class="cat-badge cat-${cat}">${catIcon[cat]} ${catLabel[cat]}</span>
-                        </div>
-                        <span class="date-sent">${dateFormatted}</span>
-                    </div>
-                    <div class="subject">
-                        ${e.unread ? '<span class="unread-dot"></span>' : ''}
-                        ${escapeHtml(e.subject || '(No Subject)')}
-                    </div>
-                    <div class="snippet">${escapeHtml(e.snippet)}</div>
-                    ${e.deadline ? `
-                        <div class="deadline-box">
-                            <div class="deadline-info">
-                                <span>📅 <strong>${e.deadline}</strong></span>
-                                <span class="urgency-badge ${badgeClass}">${e.urgency}</span>
-                            </div>
-                            <div class="context-quote">"${escapeHtml(e.context)}"</div>
-                        </div>
-                    ` : ''}
-                </div>`;
-        }
+    // Interactive Rope Pluck / Vibration on click or hover
+    path.addEventListener('mouseenter', () => pluckRope(path));
+    path.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      pluckRope(path, true);
+    });
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;")
-                      .replace(/</g, "&lt;")
-                      .replace(/>/g, "&gt;")
-                      .replace(/"/g, "&quot;")
-                      .replace(/'/g, "&#039;");
-        }
+    svg.appendChild(path);
+    currentRopePaths.push(path);
+  });
+}
 
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-                btn.classList.add('active');
-                activeFilter = btn.dataset.filter;
-                renderAll();
-            });
+/* ── Pluck / vibrate rope animation ── */
+function pluckRope(pathEl, strong = false) {
+  if (pathEl._plucking) return;
+  pathEl._plucking = true;
+
+  const pax  = parseFloat(pathEl.dataset.pax);
+  const pay  = parseFloat(pathEl.dataset.pay);
+  const pbx  = parseFloat(pathEl.dataset.pbx);
+  const pby  = parseFloat(pathEl.dataset.pby);
+  const baseMidX = parseFloat(pathEl.dataset.midx);
+  const baseMidY = parseFloat(pathEl.dataset.midy);
+
+  let frame = 0;
+  const totalFrames = strong ? 24 : 14;
+  const amp = strong ? 16 : 8;
+
+  function animatePluck() {
+    frame++;
+    if (frame >= totalFrames) {
+      pathEl.setAttribute('d', `M ${pax.toFixed(1)} ${pay.toFixed(1)} Q ${baseMidX.toFixed(1)} ${baseMidY.toFixed(1)} ${pbx.toFixed(1)} ${pby.toFixed(1)}`);
+      pathEl._plucking = false;
+      return;
+    }
+
+    const decay = 1 - (frame / totalFrames);
+    const offset = Math.sin(frame * 0.8) * amp * decay;
+    const curMidX = baseMidX + offset * 0.6;
+    const curMidY = baseMidY + offset;
+
+    pathEl.setAttribute('d', `M ${pax.toFixed(1)} ${pay.toFixed(1)} Q ${curMidX.toFixed(1)} ${curMidY.toFixed(1)} ${pbx.toFixed(1)} ${pby.toFixed(1)}`);
+    requestAnimationFrame(animatePluck);
+  }
+
+  requestAnimationFrame(animatePluck);
+}
+
+/* ── Highlight note's connected red ropes ── */
+function highlightNoteRopes(idx, highlight) {
+  const ropes = document.querySelectorAll(`.red-rope[data-a="${idx}"], .red-rope[data-b="${idx}"]`);
+  ropes.forEach(r => {
+    if (highlight) {
+      r.classList.add('active-rope');
+      pluckRope(r, false);
+    } else {
+      r.classList.remove('active-rope');
+    }
+  });
+}
+
+/* ── SCROLL AIR-RUSH WIGGLE EFFECT ── */
+let lastScrollTop = 0;
+const canvasEl = document.getElementById('canvas');
+
+canvasEl.addEventListener('scroll', () => {
+  const st = canvasEl.scrollTop;
+  const scrollVelocity = Math.abs(st - lastScrollTop);
+  const scrollDir = st > lastScrollTop ? 1 : -1;
+  lastScrollTop = st;
+
+  if (scrollVelocity > 2) {
+    const canvasRect = canvasEl.getBoundingClientRect();
+    const notes = canvasEl.querySelectorAll('.note');
+    const now = Date.now();
+
+    notes.forEach(note => {
+      const lastWiggle = parseInt(note.dataset.lastWiggle || '0', 10);
+      if (now - lastWiggle < 650 || note.classList.contains('waving')) return;
+
+      const rect = note.getBoundingClientRect();
+      if (rect.bottom >= canvasRect.top + 30 && rect.top <= canvasRect.bottom - 30) {
+        note.dataset.lastWiggle = now.toString();
+        const dirDeg = (scrollDir * (5 + Math.random() * 4)).toFixed(1);
+        note.style.setProperty('--wiggle-dir', `${dirDeg}deg`);
+        note.classList.remove('scroll-breeze');
+        void note.offsetWidth;
+        note.classList.add('scroll-breeze');
+      }
+    });
+  }
+});
+
+/* ── Open Case File Dossier Modal ── */
+function openDossier(e, idx) {
+  document.getElementById('modal-stamp').textContent = `CASE FILE #${(idx + 1).toString().padStart(3, '0')}`;
+  document.getElementById('modal-title').textContent = e.subject || '(No Subject)';
+  document.getElementById('modal-sender').textContent = e.sender;
+  document.getElementById('modal-date').textContent = e.date || 'Unknown';
+  document.getElementById('modal-cat').textContent = `${catIcon[e.category] || ''} ${e.category.toUpperCase()}`;
+
+  const deadlineBox = document.getElementById('modal-deadline-container');
+  if (e.deadline) {
+    deadlineBox.innerHTML = `
+      <div class="dossier-deadline-box">
+        📅 <strong>DEADLINE DETECTED:</strong> ${esc(e.deadline)}
+        ${e.context ? `<div style="margin-top:4px; opacity:0.85; font-style:italic;">"${esc(e.context)}"` : ''}</div>
+      </div>
+    `;
+  } else {
+    deadlineBox.innerHTML = '';
+  }
+
+  document.getElementById('modal-body').textContent = e.body || e.snippet || 'No message content available.';
+  document.getElementById('modal-urgency-note').textContent = e.urgency ? `STATUS: ${e.urgency.toUpperCase()}` : '';
+
+  // Mark as read in local UI
+  e.unread = false;
+  const noteEl = document.getElementById(`note-${idx}`);
+  if (noteEl) {
+    const marker = noteEl.querySelector('.unread-marker');
+    if (marker) marker.remove();
+  }
+  updateStats();
+
+  document.getElementById('dossier-modal').classList.add('open');
+}
+
+/* ── Close Modal ── */
+function closeDossier() {
+  document.getElementById('dossier-modal').classList.remove('open');
+}
+
+document.getElementById('modal-close-btn').addEventListener('click', closeDossier);
+document.getElementById('dossier-modal').addEventListener('click', (ev) => {
+  if (ev.target.id === 'dossier-modal') closeDossier();
+});
+window.addEventListener('keydown', (ev) => {
+  if (ev.key === 'Escape') closeDossier();
+});
+
+/* ── Main render ── */
+function render() {
+  let emails = [...allEmails];
+  if (activeFilter === 'deadlines')      emails = emails.filter(e => e.deadline);
+  else if (activeFilter === 'unread')    emails = emails.filter(e => e.unread);
+  else if (catFilters.includes(activeFilter)) emails = emails.filter(e => e.category === activeFilter);
+
+  const inner = document.getElementById('canvas-inner');
+  inner.querySelectorAll('.note').forEach(n => n.remove());
+  document.getElementById('strings').innerHTML = '';
+
+  if (!emails.length) {
+    setStatus('No evidence found for this filter.', false);
+    return;
+  }
+
+  const layouts = placeNotes(emails);
+  layouts.forEach((l, i) => inner.appendChild(makeNote(l, i)));
+  drawStrings(layouts);
+  hideStatus();
+}
+
+/* ── Stats ── */
+function updateStats() {
+  document.getElementById('st-total').textContent  = allEmails.length;
+  document.getElementById('st-dead').textContent   = allEmails.filter(e => e.deadline).length;
+  document.getElementById('st-unread').textContent = allEmails.filter(e => e.unread).length;
+  const badge = document.getElementById('st-clues-badge');
+  if (badge) badge.textContent = allEmails.length;
+  renderCluesSidebar();
+}
+
+/* ── CLUES SIDEBAR / EVIDENCE DOCKET CONTROLLER ── */
+let clueSidebarFilter = 'all';
+let clueSearchQuery = '';
+
+function toggleCluesSidebar(forceState) {
+  const sidebar = document.getElementById('clues-sidebar');
+  const floatingTab = document.getElementById('clues-tab');
+  if (!sidebar) return;
+
+  const isOpen = forceState !== undefined ? forceState : !sidebar.classList.contains('open');
+  if (isOpen) {
+    sidebar.classList.add('open');
+    if (floatingTab) floatingTab.classList.add('hidden');
+    renderCluesSidebar();
+    const searchInput = document.getElementById('clue-search');
+    if (searchInput) searchInput.focus();
+  } else {
+    sidebar.classList.remove('open');
+    if (floatingTab) floatingTab.classList.remove('hidden');
+  }
+}
+
+function renderCluesSidebar() {
+  const listEl = document.getElementById('clues-list');
+  const badgeEl = document.getElementById('st-clues-badge');
+  const counterEl = document.getElementById('clues-counter');
+  if (!listEl) return;
+
+  if (badgeEl) badgeEl.textContent = allEmails.length;
+
+  let filtered = allEmails.map((email, idx) => ({ email, idx }));
+
+  // 1. Filter by category pill / type
+  if (clueSidebarFilter === 'deadlines') {
+    filtered = filtered.filter(item => item.email.deadline);
+  } else if (clueSidebarFilter === 'unread') {
+    filtered = filtered.filter(item => item.email.unread);
+  } else if (clueSidebarFilter !== 'all' && catFilters.includes(clueSidebarFilter)) {
+    filtered = filtered.filter(item => item.email.category === clueSidebarFilter);
+  }
+
+  // 2. Filter by search query
+  if (clueSearchQuery) {
+    const q = clueSearchQuery.toLowerCase();
+    filtered = filtered.filter(item => {
+      const e = item.email;
+      return (e.subject && e.subject.toLowerCase().includes(q)) ||
+             (e.sender && e.sender.toLowerCase().includes(q)) ||
+             (e.snippet && e.snippet.toLowerCase().includes(q)) ||
+             (e.deadline && e.deadline.toLowerCase().includes(q)) ||
+             (e.category && e.category.toLowerCase().includes(q));
+    });
+  }
+
+  if (counterEl) {
+    counterEl.textContent = `${filtered.length} of ${allEmails.length} clues`;
+  }
+
+  if (!filtered.length) {
+    listEl.innerHTML = `<div class="clues-empty-state">No matching clues found in docket.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(item => {
+    const e = item.email;
+    const idx = item.idx;
+    const isUrgent = e.urgency === 'urgent' || e.urgency === 'overdue';
+    const hasDeadline = Boolean(e.deadline);
+    const dateFormatted = e.date ? new Date(e.date).toLocaleDateString() : '';
+    const senderShort = esc(e.sender).replace(/<.*?>/, '').trim().slice(0, 32);
+    const subjShort = esc(e.subject || '(No Subject)').slice(0, 50);
+
+    return `
+      <article class="clue-card ${hasDeadline ? 'has-deadline' : ''} ${isUrgent ? 'urgent' : ''}" data-idx="${idx}" tabindex="0" role="button" aria-label="Inspect clue ${idx + 1}">
+        <div class="clue-card-hdr">
+          <span class="clue-stamp">CLUE #${(idx + 1).toString().padStart(3, '0')}</span>
+          <span class="clue-date">${dateFormatted}</span>
+        </div>
+        <div class="clue-subject">${subjShort}</div>
+        <div class="clue-sender">From: ${senderShort}</div>
+        ${e.deadline ? `
+          <div class="clue-deadline-pill">
+            📅 ${esc(e.deadline)} ${e.urgency ? `(${esc(e.urgency)})` : ''}
+          </div>
+        ` : ''}
+        <div class="clue-snippet">${esc(e.snippet || '')}</div>
+        <div class="clue-card-ftr">
+          <span class="clue-cat-name">${catIcon[e.category] || ''} ${esc(e.category || 'general').toUpperCase()}</span>
+          <span class="clue-action-hint">🔍 Focus &amp; Inspect &rarr;</span>
+        </div>
+      </article>
+    `;
+  }).join('');
+
+  // Attach click & enter listeners
+  listEl.querySelectorAll('.clue-card').forEach(card => {
+    const handleInspect = () => {
+      const idx = parseInt(card.dataset.idx, 10);
+      focusNoteOnBoard(idx);
+    };
+    card.addEventListener('click', handleInspect);
+    card.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' || ev.key === ' ') {
+        ev.preventDefault();
+        handleInspect();
+      }
+    });
+  });
+}
+
+function focusNoteOnBoard(idx) {
+  const noteEl = document.getElementById(`note-${idx}`);
+  const e = allEmails[idx];
+  if (noteEl) {
+    const canvas = document.getElementById('canvas');
+    if (canvas) {
+      const targetY = Math.max(0, noteEl.offsetTop - 100);
+      canvas.scrollTo({ top: targetY, behavior: 'smooth' });
+    }
+
+    noteEl.classList.remove('waving');
+    void noteEl.offsetWidth;
+    noteEl.classList.add('waving');
+    highlightNoteRopes(idx, true);
+    setTimeout(() => highlightNoteRopes(idx, false), 2200);
+  }
+
+  if (e) {
+    openDossier(e, idx);
+  }
+}
+
+function jumpToNextUrgent() {
+  const urgentIdx = allEmails.findIndex(e => e.deadline && (e.urgency === 'urgent' || e.urgency === 'overdue' || e.urgency === 'soon'));
+  if (urgentIdx !== -1) {
+    focusNoteOnBoard(urgentIdx);
+  } else if (allEmails.length > 0) {
+    focusNoteOnBoard(0);
+  }
+}
+
+// Clues Sidebar UI Listeners
+const btnToggleClues = document.getElementById('btn-toggle-clues');
+if (btnToggleClues) btnToggleClues.addEventListener('click', () => toggleCluesSidebar());
+
+const cluesTab = document.getElementById('clues-tab');
+if (cluesTab) cluesTab.addEventListener('click', () => toggleCluesSidebar(true));
+
+const cluesCloseBtn = document.getElementById('clues-close-btn');
+if (cluesCloseBtn) cluesCloseBtn.addEventListener('click', () => toggleCluesSidebar(false));
+
+const btnJumpUrgent = document.getElementById('btn-jump-urgent');
+if (btnJumpUrgent) btnJumpUrgent.addEventListener('click', jumpToNextUrgent);
+
+const clueSearchInput = document.getElementById('clue-search');
+if (clueSearchInput) {
+  clueSearchInput.addEventListener('input', (e) => {
+    clueSearchQuery = e.target.value.trim();
+    renderCluesSidebar();
+  });
+}
+
+const cluesPills = document.getElementById('clues-pills');
+if (cluesPills) {
+  cluesPills.querySelectorAll('.clue-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      cluesPills.querySelectorAll('.clue-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      clueSidebarFilter = pill.dataset.clueFilter;
+      activeFilter = pill.dataset.clueFilter;
+      const filterSel = document.getElementById('filter-sel');
+      if (filterSel) filterSel.value = activeFilter;
+      render();
+      renderCluesSidebar();
+    });
+  });
+}
+
+// Global keyboard shortcuts
+window.addEventListener('keydown', (ev) => {
+  const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+  const isInput = activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select';
+
+  if (!isInput && (ev.key === 'c' || ev.key === 'C')) {
+    ev.preventDefault();
+    toggleCluesSidebar();
+  } else if (ev.key === 'Escape') {
+    const sidebar = document.getElementById('clues-sidebar');
+    if (sidebar && sidebar.classList.contains('open')) {
+      toggleCluesSidebar(false);
+    }
+  }
+});
+
+/* ── Status overlay ── */
+function setStatus(msg, loading = true) {
+  const el = document.getElementById('status-overlay');
+  el.classList.remove('hidden');
+  el.innerHTML = loading
+    ? `<div class="spinner"></div><div class="status-text">${msg}</div>`
+    : `<div class="status-text">${msg}</div>`;
+}
+function hideStatus() {
+  document.getElementById('status-overlay').classList.add('hidden');
+}
+
+/* ── PAGINATION STATE ── */
+let currentPage = 1;
+let pageTokenHistory = [null]; // page 1 has token null
+let nextPageToken = null;
+
+function updatePaginationControls() {
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  const pageLabel = document.getElementById('page-label');
+
+  if (pageLabel) pageLabel.textContent = `Page ${currentPage}`;
+  if (btnPrev) btnPrev.disabled = (currentPage <= 1);
+  if (btnNext) btnNext.disabled = (!nextPageToken);
+}
+
+/* ── Fetch emails with smooth pagination ── */
+async function fetchEmails(token = null) {
+  const btnPrev = document.getElementById('btn-prev');
+  const btnNext = document.getElementById('btn-next');
+  if (btnPrev) btnPrev.disabled = true;
+  if (btnNext) btnNext.disabled = true;
+
+  const inner = document.getElementById('canvas-inner');
+  if (inner) inner.style.opacity = '0.3';
+
+  setStatus(`Scanning evidence for Page ${currentPage}...`, true);
+  try {
+    const url = token ? `/api/emails?pageToken=${encodeURIComponent(token)}` : '/api/emails';
+    const res = await fetch(url);
+    if (!res.ok) {
+      if (res.status === 401) { window.location.href = '/login'; return; }
+      throw new Error(`Server error ${res.status}`);
+    }
+    const data = await res.json();
+    if (data.error) {
+      setStatus(`⚠️ ${data.error}`, false);
+      if (inner) inner.style.opacity = '1';
+      updatePaginationControls();
+      return;
+    }
+
+    if (Array.isArray(data)) {
+      allEmails = data;
+      nextPageToken = null;
+    } else {
+      allEmails = data.emails || [];
+      nextPageToken = data.nextPageToken || null;
+    }
+
+    updateStats();
+    updatePaginationControls();
+    render();
+    if (inner) inner.style.opacity = '1';
+    document.getElementById('canvas').scrollTo({ top: 0, behavior: 'smooth' });
+  } catch (err) {
+    setStatus(`⚠️ ${err.message}`, false);
+    if (inner) inner.style.opacity = '1';
+    updatePaginationControls();
+  }
+}
+
+/* ── Pagination Button Listeners ── */
+document.getElementById('btn-next').addEventListener('click', () => {
+  if (!nextPageToken) return;
+  currentPage++;
+  pageTokenHistory[currentPage - 1] = nextPageToken;
+  fetchEmails(nextPageToken);
+});
+
+document.getElementById('btn-prev').addEventListener('click', () => {
+  if (currentPage <= 1) return;
+  currentPage--;
+  const prevToken = pageTokenHistory[currentPage - 1] || null;
+  fetchEmails(prevToken);
+});
+
+/* ── Filter ── */
+document.getElementById('filter-sel').addEventListener('change', function() {
+  activeFilter = this.value;
+  clueSidebarFilter = this.value;
+  const cluesPills = document.getElementById('clues-pills');
+  if (cluesPills) {
+    cluesPills.querySelectorAll('.clue-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.clueFilter === activeFilter);
+    });
+  }
+  render();
+  renderCluesSidebar();
+});
+
+/* ── CURSOR FLUID DISTORTION RIPPLE ENGINE ── */
+(function() {
+  const dCanvas = document.getElementById('distortion-canvas');
+  if (!dCanvas) return;
+  const ctx = dCanvas.getContext('2d');
+  let dWidth, dHeight;
+  const ripples = [];
+
+  function resizeDCanvas() {
+    dWidth = dCanvas.width = window.innerWidth;
+    dHeight = dCanvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resizeDCanvas);
+  resizeDCanvas();
+
+  let prevMouseX = null, prevMouseY = null;
+
+  window.addEventListener('mousemove', (e) => {
+    const x = e.clientX;
+    const y = e.clientY;
+
+    if (prevMouseX !== null) {
+      const dist = Math.hypot(x - prevMouseX, y - prevMouseY);
+      if (dist > 3) {
+        ripples.push({
+          x: x,
+          y: y,
+          radius: 6,
+          maxRadius: Math.min(48, 16 + dist * 0.8),
+          alpha: 0.65,
+          speed: 1.6 + dist * 0.05,
+          color: Math.random() > 0.4 ? '255, 230, 160' : '220, 180, 110'
         });
+      }
+    }
+    prevMouseX = x;
+    prevMouseY = y;
+  });
 
-        fetchEmails();
-    </script>
+  function renderDistortion() {
+    ctx.clearRect(0, 0, dWidth, dHeight);
+
+    for (let i = ripples.length - 1; i >= 0; i--) {
+      const r = ripples[i];
+      r.radius += r.speed;
+      r.alpha *= 0.92;
+
+      if (r.alpha <= 0.01 || r.radius >= r.maxRadius) {
+        ripples.splice(i, 1);
+        continue;
+      }
+
+      // Outer refractive ring
+      const grad = ctx.createRadialGradient(r.x, r.y, Math.max(0, r.radius - 8), r.x, r.y, r.radius);
+      grad.addColorStop(0, `rgba(${r.color}, 0)`);
+      grad.addColorStop(0.7, `rgba(${r.color}, ${r.alpha * 0.45})`);
+      grad.addColorStop(0.9, `rgba(255, 255, 255, ${r.alpha * 0.7})`);
+      grad.addColorStop(1, `rgba(${r.color}, 0)`);
+
+      ctx.beginPath();
+      ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+    }
+
+    requestAnimationFrame(renderDistortion);
+  }
+  requestAnimationFrame(renderDistortion);
+})();
+
+fetchEmails();
+</script>
 </body>
 </html>

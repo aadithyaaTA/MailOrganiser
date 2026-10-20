@@ -6,6 +6,7 @@ def new_getaddrinfo(*args, **kwargs):
 socket.getaddrinfo = new_getaddrinfo
 
 import os
+import time
 import re
 import sys
 import base64
@@ -19,14 +20,17 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
+from oauthlib.oauth2.rfc6749.errors import OAuth2Error
 
 # Environment setup
-os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+if os.environ.get('FLASK_ENV') == 'development' or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'dev-secret-key-mailwatch-12345')
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = False
+app.config['SESSION_COOKIE_HTTPONLY'] = True
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -215,9 +219,10 @@ def calculate_urgency(deadline_dt):
 
     today_midnight = datetime.datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    target_dt = deadline_dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    target_dt = deadline_dt
     if target_dt.tzinfo is not None:
-        target_dt = target_dt.astimezone(datetime.timezone.utc).replace(tzinfo=None, hour=0, minute=0, second=0, microsecond=0)
+        target_dt = target_dt.astimezone().replace(tzinfo=None)
+    target_dt = target_dt.replace(hour=0, minute=0, second=0, microsecond=0)
 
     days_diff = (target_dt - today_midnight).days
 
@@ -256,57 +261,114 @@ def index():
     return redirect(url_for('login'))
 
 
+@app.before_request
+def ensure_localhost():
+    """Ensure all requests are routed via localhost to preserve OAuth session cookies.
+
+    Returns:
+        Optional[werkzeug.wrappers.Response]: Redirect response if accessing via IP, otherwise None.
+    """
+    if request.host.startswith('127.0.0.1'):
+        new_url = request.url.replace('127.0.0.1:5000', 'localhost:5000', 1)
+        return redirect(new_url, code=302)
+    return None
+
+
 @app.route('/login')
 def login():
-    return render_template('login.html')
+    """Render login page or redirect to index if already authenticated.
+
+    Returns:
+        Union[str, werkzeug.wrappers.Response]: Rendered template or redirect response.
+    """
+    if 'credentials' in session:
+        return redirect(url_for('index'))
+    error = request.args.get('error')
+    return render_template('login.html', error=error)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    """Handle browser favicon request.
+
+    Returns:
+        Response: 204 No Content response.
+    """
+    from flask import Response
+    return Response(status=204)
 
 
 @app.route('/authorize')
 def authorize():
-    import secrets, hashlib, base64
-    code_verifier = base64.urlsafe_b64encode(secrets.token_bytes(32)).rstrip(b'=').decode()
-    code_challenge = base64.urlsafe_b64encode(
-        hashlib.sha256(code_verifier.encode()).digest()
-    ).rstrip(b'=').decode()
-    session['code_verifier'] = code_verifier
+    """Initiate Google OAuth 2.0 flow with PKCE challenge.
 
+    Returns:
+        werkzeug.wrappers.Response: Redirect to Google OAuth consent page.
+    """
     flow = Flow.from_client_secrets_file(
         CREDENTIALS_FILE,
         scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
+        redirect_uri=REDIRECT_URI,
+        autogenerate_code_verifier=True
     )
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         prompt='consent',
-        include_granted_scopes='true',
-        code_challenge=code_challenge,
-        code_challenge_method='S256'
+        include_granted_scopes='true'
     )
     session['state'] = state
+    session['code_verifier'] = flow.code_verifier
     return redirect(authorization_url)
 
 
 @app.route('/oauth2callback')
 def oauth2callback():
-    flow = Flow.from_client_secrets_file(
-        CREDENTIALS_FILE,
-        scopes=SCOPES,
-        redirect_uri=REDIRECT_URI
-    )
-    flow.fetch_token(
-        authorization_response=request.url,
-        code_verifier=session.get('code_verifier')
-    )
-    credentials = flow.credentials
-    session['credentials'] = {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
-    return redirect(url_for('index'))
+    """Handle OAuth 2.0 callback, exchange code for tokens, and store in session.
+
+    Returns:
+        werkzeug.wrappers.Response: Redirect to index on success or login on failure.
+    """
+    error = request.args.get('error')
+    if error:
+        logger.warning(f"OAuth authorization denied or error returned from provider: {error}")
+        session.clear()
+        return redirect(url_for('login', error='access_denied'))
+
+    state = session.get('state')
+    code_verifier = session.get('code_verifier')
+
+    if not state or not code_verifier:
+        logger.warning("OAuth callback missing state or code_verifier in session. Redirecting to login.")
+        session.clear()
+        return redirect(url_for('login', error='session_expired'))
+
+    try:
+        flow = Flow.from_client_secrets_file(
+            CREDENTIALS_FILE,
+            scopes=SCOPES,
+            redirect_uri=REDIRECT_URI,
+            state=state,
+            code_verifier=code_verifier
+        )
+        flow.fetch_token(authorization_response=request.url)
+        credentials = flow.credentials
+        session['credentials'] = {
+            'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes
+        }
+        return redirect(url_for('index'))
+    except OAuth2Error as e:
+        logger.error(f"OAuth2 protocol error during token exchange: {e}")
+        session.clear()
+        return redirect(url_for('login', error='invalid_grant'))
+    except Exception as e:
+        logger.error(f"Unexpected error during OAuth token exchange: {e}")
+        session.clear()
+        return redirect(url_for('login', error='auth_error'))
 
 
 @app.route('/logout')
@@ -403,6 +465,8 @@ def get_emails():
     if 'credentials' not in session:
         return jsonify({"error": "Not authenticated"}), 401
 
+    page_token = request.args.get('pageToken', None)
+
     creds_info = session['credentials']
 
     creds = Credentials(
@@ -428,22 +492,51 @@ def get_emails():
         except Exception as e:
             logger.error("Failed to refresh access token: %s", e)
             return jsonify({"error": f"Failed to refresh token: {str(e)}"}), 401
+    elif creds.expired:
+        logger.error("Access token expired and no refresh token available.")
+        session.clear()
+        return jsonify({"error": "Token expired, please login again."}), 401
 
     try:
         service = build('gmail', 'v1', credentials=creds)
-        res = service.users().messages().list(userId='me', q='label:INBOX', maxResults=30).execute()
+        list_kwargs = {'userId': 'me', 'q': 'label:INBOX', 'maxResults': 30}
+        if page_token:
+            list_kwargs['pageToken'] = page_token
+        res = service.users().messages().list(**list_kwargs).execute()
         messages_list = res.get('messages', [])
+        next_page_token = res.get('nextPageToken', None)
     except Exception as e:
         logger.error("Gmail API list messages failed: %s", e)
         return jsonify({"error": f"Gmail API error: {str(e)}"}), 500
 
     processed_emails = []
 
-    for msg_item in messages_list:
-        try:
-            msg_id = msg_item['id']
-            msg = service.users().messages().get(userId='me', id=msg_id, format='full').execute()
+    messages_data = {}
+    def batch_callback(request_id: str, response: dict, exception: Exception) -> None:
+        """Callback for each message in a batch request."""
+        if exception is None:
+            messages_data[request_id] = response
+        else:
+            logger.error("Batch error on message %s: %s", request_id, exception)
 
+    # Split into chunks of 10 to balance speed and avoid 429 concurrent limit.
+    CHUNK_SIZE = 10
+    if messages_list:
+        for chunk_start in range(0, len(messages_list), CHUNK_SIZE):
+            chunk = messages_list[chunk_start:chunk_start + CHUNK_SIZE]
+            batch = service.new_batch_http_request(callback=batch_callback)
+            for msg_item in chunk:
+                msg_id = msg_item['id']
+                batch.add(
+                    service.users().messages().get(userId='me', id=msg_id, format='full'),
+                    request_id=msg_id
+                )
+            batch.execute()
+            if chunk_start + CHUNK_SIZE < len(messages_list):
+                time.sleep(0.2)
+
+    for msg_id, msg in messages_data.items():
+        try:
             headers = msg.get('payload', {}).get('headers', [])
             header_dict = {h['name'].lower(): h['value'] for h in headers if 'name' in h and 'value' in h}
 
@@ -470,6 +563,7 @@ def get_emails():
                 "date": date_iso,
                 "unread": unread,
                 "snippet": snippet,
+                "body": body if body else snippet,
                 "deadline": deadline_str,
                 "urgency": urgency,
                 "context": context,
@@ -479,7 +573,7 @@ def get_emails():
             }
             processed_emails.append(email_obj)
         except Exception as e:
-            logger.error("Error processing email message %s: %s", msg_item.get('id'), e)
+            logger.error("Error processing email message %s: %s", msg_id, e)
             continue
 
     def sort_key(item):
@@ -503,6 +597,7 @@ def get_emails():
             "date": item["date"],
             "unread": item["unread"],
             "snippet": item["snippet"],
+            "body": item.get("body", item["snippet"]),
             "deadline": item["deadline"],
             "urgency": item["urgency"],
             "context": item["context"],
@@ -510,14 +605,18 @@ def get_emails():
         }
         output_list.append(clean_item)
 
-    return jsonify(output_list)
+    return jsonify({
+        "emails": output_list,
+        "nextPageToken": next_page_token,
+        "count": len(output_list)
+    })
 
 
 if __name__ == '__main__':
     import webbrowser
     import threading
 
-    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true' or not app.debug:
+    if os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         threading.Timer(1.2, lambda: webbrowser.open('http://localhost:5000')).start()
 
     app.run(debug=True, port=5000)

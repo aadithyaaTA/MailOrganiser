@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detective Board — Investigation</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --board-mid:   #2c1f0e;
+      --board-cork:  #7a5c30;
+      --note-y1:     #f5e642;
+      --note-y2:     #f0c040;
+      --note-y3:     #e8d87f;
+      --paper-bg:    #d4c9a8;
+      --font-main:   'Special Elite', serif;
+    }
+
+    html, body {
+      width: 100%; height: 100%;
+      overflow: hidden;
+      background: #0d0a06;
+      font-family: var(--font-main);
+    }
+
+    /* ── BOARD ── */
+    #board {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: var(--board-mid);
+      background-image:
+        repeating-linear-gradient(92deg, transparent 0px, transparent 18px, rgba(0,0,0,0.08) 18px, rgba(0,0,0,0.08) 20px),
+        repeating-linear-gradient(180deg, transparent 0px, transparent 60px, rgba(255,200,80,0.03) 60px, rgba(255,200,80,0.03) 62px),
+        linear-gradient(160deg, #3b2610 0%, #2c1f0e 30%, #1e1508 60%, #2c1f0e 100%);
+    }
+
+    /* ── CORK PANEL ── */
+    #cork {
+      position: absolute;
+      top: 5%; left: 5%;
+      width: 90%; height: 88%;
+      border-radius: 6px;
+      background-color: var(--board-cork);
+      background-image:
+        radial-gradient(ellipse at 30% 20%, rgba(180,130,60,0.45) 0%, transparent 55%),
+        radial-gradient(ellipse at 75% 70%, rgba(100,65,20,0.4) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(0,0,0,0.06) 3px, rgba(0,0,0,0.06) 4px),
+        repeating-linear-gradient(-45deg, transparent, transparent 3px, rgba(255,255,255,0.03) 3px, rgba(255,255,255,0.03) 4px);
+      box-shadow:
+        inset 0 0 60px rgba(0,0,0,0.55),
+        0 0 0 4px #3b2a10,
+        0 0 0 6px #1e1408,
+        0 8px 40px rgba(0,0,0,0.7);
+    }
+
+    /* ── SPOTLIGHT ── */
+    #spotlight {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 55% 70% at 50% -8%,
+        rgba(245,201,122,0.55) 0%,
+        rgba(200,140,50,0.18) 30%,
+        rgba(50,30,10,0.0) 60%,
+        rgba(13,10,6,0.82) 100%
+      );
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    /* ── LAMP FIXTURE ── */
+    #lamp {
+      position: absolute;
+      top: -14px; left: 50%;
+      transform: translateX(-50%);
+      width: 90px; height: 44px;
+      background: linear-gradient(180deg, #1a1208 60%, #3b2a10 100%);
+      border-radius: 0 0 50% 50%;
+      box-shadow: 0 8px 24px rgba(245,201,122,0.35), inset 0 -6px 12px rgba(245,201,122,0.25);
+      z-index: 60;
+    }
+
+    /* ── GLOBE ── */
+    #globe {
+      position: absolute;
+      bottom: 6%; right: 3%;
+      width: 90px; height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 35%, #4a6fa5 0%, #1e3a5f 45%, #0d1f36 100%);
+      box-shadow: -6px -6px 20px rgba(255,255,255,0.06), 4px 4px 30px rgba(0,0,0,0.8), inset -8px -8px 20px rgba(0,0,0,0.5);
+      z-index: 40;
+      overflow: hidden;
+    }
+    #globe::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        repeating-linear-gradient(0deg, transparent 0px, transparent 10px, rgba(255,255,255,0.06) 10px, rgba(255,255,255,0.06) 11px),
+        repeating-linear-gradient(90deg, transparent 0px, transparent 12px, rgba(255,255,255,0.04) 12px, rgba(255,255,255,0.04) 13px);
+    }
+    #globe::after {
+      content: '';
+      position: absolute;
+      top: 10%; left: 10%;
+      width: 28%; height: 28%;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+      filter: blur(4px);
+    }
+    #globe-stand {
+      position: absolute;
+      bottom: 4%; right: 4.2%;
+      width: 28px; height: 22px;
+      background: linear-gradient(180deg, #5a3e20 0%, #3b2610 100%);
+      border-radius: 2px 2px 4px 4px;
+      z-index: 39;
+    }
+
+    /* ── COFFEE MUG ── */
+    #mug {
+      position: absolute;
+      bottom: 8%; left: 5%;
+      z-index: 40;
+    }
+    .mug-body {
+      width: 46px; height: 52px;
+      background: linear-gradient(160deg, #2a2018 30%, #1a1208 100%);
+      border-radius: 4px 4px 8px 8px;
+      box-shadow: 3px 3px 12px rgba(0,0,0,0.7), inset -4px 0 8px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .mug-handle {
+      position: absolute;
+      right: -14px; top: 10px;
+      width: 14px; height: 24px;
+      border: 4px solid #2a2018;
+      border-radius: 0 50% 50% 0;
+    }
+    .mug-steam {
+      position: absolute;
+      bottom: 52px; left: 8px;
+      display: flex; gap: 6px;
+    }
+    .steam-line {
+      width: 3px; height: 16px;
+      background: linear-gradient(180deg, transparent, rgba(255,255,255,0.25));
+      border-radius: 4px;
+      animation: steam 2.4s ease-in-out infinite;
+    }
+    .steam-line:nth-child(2) { animation-delay: 0.6s; height: 12px; }
+    .steam-line:nth-child(3) { animation-delay: 1.2s; }
+    @keyframes steam {
+      0%   { opacity: 0; transform: translateY(0) scaleX(1); }
+      40%  { opacity: 0.6; transform: translateY(-8px) scaleX(1.4); }
+      100% { opacity: 0; transform: translateY(-18px) scaleX(0.6); }
+    }
+
+    /* ── PINNED DOCUMENTS ── */
+    .doc {
+      position: absolute;
+      background: var(--paper-bg);
+      box-shadow: 3px 5px 18px rgba(0,0,0,0.7), inset 0 0 30px rgba(0,0,0,0.1);
+      z-index: 10;
+      overflow: hidden;
+      border-radius: 1px;
+    }
+    .doc::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(180deg, transparent 0px, transparent 9px, rgba(0,0,0,0.18) 9px, rgba(0,0,0,0.18) 10px);
+      background-size: 100% 10px;
+      background-position: 0 20px;
+    }
+    .doc-header {
+      width: 70%; height: 10px;
+      background: rgba(0,0,0,0.3);
+      margin: 14px auto 0;
+      border-radius: 2px;
+    }
+
+    /* ── PIN DOT ── */
+    .pin {
+      position: absolute;
+      top: -6px; left: 50%;
+      transform: translateX(-50%);
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, #e74c3c, #8b0000);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.7);
+      z-index: 5;
+    }
+    .pin::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.4);
+    }
+
+    /* ── STICKY NOTES ── */
+    .note {
+      position: absolute;
+      width: 130px;
+      padding: 22px 10px 12px;
+      background: var(--note-y1);
+      box-shadow: 3px 5px 16px rgba(0,0,0,0.65), inset 0 -4px 8px rgba(0,0,0,0.1);
+      font-family: var(--font-main);
+      font-size: 13px;
+      color: #1a1208;
+      text-align: center;
+      line-height: 1.3;
+      cursor: pointer;
+      user-select: none;
+      transform-origin: top center;
+      z-index: 20;
+      border-radius: 1px 1px 2px 2px;
+    }
+    .note::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: rgba(0,0,0,0.12);
+      border-radius: 1px 1px 0 0;
+    }
+
+    /* ── WAVE ANIMATION ── */
+    @keyframes noteBreezeWave {
+      0%   { transform: rotate(var(--base-rot)); }
+      10%  { transform: rotate(calc(var(--base-rot) + 6deg)); }
+      25%  { transform: rotate(calc(var(--base-rot) - 5deg)); }
+      38%  { transform: rotate(calc(var(--base-rot) + 3.5deg)); }
+      52%  { transform: rotate(calc(var(--base-rot) - 2deg)); }
+      65%  { transform: rotate(calc(var(--base-rot) + 1deg)); }
+      80%  { transform: rotate(calc(var(--base-rot) - 0.5deg)); }
+      100% { transform: rotate(var(--base-rot)); }
+    }
+    .note.waving {
+      animation: noteBreezeWave 0.85s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    }
+
+    /* ── REDUCED MOTION ── */
+    @media (prefers-reduced-motion: reduce) {
+      .note.waving { animation: noteOpacityPulse 0.5s ease forwards; }
+      @keyframes noteOpacityPulse {
+        0%   { opacity: 1; }
+        50%  { opacity: 0.55; }
+        100% { opacity: 1; }
+      }
+      .steam-line { animation: none; }
+    }
+
+    /* ── SVG STRING OVERLAY ── */
+    #strings {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 30;
+      overflow: visible;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .note { width: 80px; font-size: 10px; padding: 18px 6px 8px; }
+      #globe { width: 56px; height: 56px; bottom: 8%; right: 2%; }
+      #globe-stand { right: 3%; }
+      .mug-body { width: 34px; height: 38px; }
+      .doc { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div id="board">
+
+  <div id="cork"></div>
+  <div id="lamp"></div>
+  <div id="globe"></div>
+  <div id="globe-stand"></div>
+
+  <div id="mug">
+    <div class="mug-steam">
+      <div class="steam-line"></div>
+      <div class="steam-line"></div>
+      <div class="steam-line"></div>
+    </div>
+    <div class="mug-body">
+      <div class="mug-handle"></div>
+    </div>
+  </div>
+
+  <!-- Pinned Documents -->
+  <div class="doc" style="width:140px;height:190px;top:9%;left:8%;transform:rotate(-4deg);">
+    <div class="pin"></div><div class="doc-header"></div>
+  </div>
+  <div class="doc" style="width:155px;height:175px;top:12%;left:72%;transform:rotate(3.5deg);">
+    <div class="pin"></div><div class="doc-header"></div>
+  </div>
+  <div class="doc" style="width:130px;height:160px;top:52%;left:16%;transform:rotate(-2deg);">
+    <div class="pin"></div><div class="doc-header"></div>
+  </div>
+  <div class="doc" style="width:145px;height:180px;top:48%;left:66%;transform:rotate(5deg);">
+    <div class="pin"></div><div class="doc-header"></div>
+  </div>
+
+  <!-- Sticky Notes -->
+  <div class="note" id="n1" style="--base-rot:-5deg;top:10%;left:20%;transform:rotate(-5deg);background:var(--note-y1);">
+    <div class="pin"></div>Market Shift
+  </div>
+  <div class="note" id="n2" style="--base-rot:4deg;top:8%;left:38%;transform:rotate(4deg);background:var(--note-y2);">
+    <div class="pin"></div>Key Players
+  </div>
+  <div class="note" id="n3" style="--base-rot:-7deg;top:11%;left:55%;transform:rotate(-7deg);background:var(--note-y3);">
+    <div class="pin"></div>Why Now?
+  </div>
+  <div class="note" id="n4" style="--base-rot:6deg;top:32%;left:42%;transform:rotate(6deg);background:var(--note-y2);z-index:22;">
+    <div class="pin"></div>The Big Picture
+  </div>
+  <div class="note" id="n5" style="--base-rot:-3deg;top:30%;left:12%;transform:rotate(-3deg);background:var(--note-y1);">
+    <div class="pin"></div>Disruption
+  </div>
+  <div class="note" id="n6" style="--base-rot:7deg;top:33%;left:70%;transform:rotate(7deg);background:var(--note-y3);">
+    <div class="pin"></div>Pattern Recognition
+  </div>
+  <div class="note" id="n7" style="--base-rot:-6deg;top:54%;left:26%;transform:rotate(-6deg);background:var(--note-y2);">
+    <div class="pin"></div>Competitor Analysis
+  </div>
+  <div class="note" id="n8" style="--base-rot:2deg;top:55%;left:58%;transform:rotate(2deg);background:var(--note-y1);">
+    <div class="pin"></div>Opportunity Window
+  </div>
+  <div class="note" id="n9" style="--base-rot:-8deg;top:72%;left:36%;transform:rotate(-8deg);background:var(--note-y3);">
+    <div class="pin"></div>Industry Trends
+  </div>
+  <div class="note" id="n10" style="--base-rot:5deg;top:71%;left:68%;transform:rotate(5deg);background:var(--note-y2);">
+    <div class="pin"></div>Behavior Patterns
+  </div>
+  <div class="note" id="n11" style="--base-rot:-4deg;top:74%;left:10%;transform:rotate(-4deg);background:var(--note-y1);">
+    <div class="pin"></div>Revenue Growth
+  </div>
+  <div class="note" id="n12" style="--base-rot:3deg;top:14%;left:82%;transform:rotate(3deg);background:var(--note-y3);">
+    <div class="pin"></div>Long-Term Vision
+  </div>
+
+  <!-- SVG Red String Overlay -->
+  <svg id="strings" xmlns="http://www.w3.org/2000/svg"></svg>
+
+  <!-- Spotlight vignette -->
+  <div id="spotlight"></div>
+
+</div>
+
+<script>
+'use strict';
+
+/* Wave animation on click */
+document.querySelectorAll('.note').forEach(note => {
+  note.addEventListener('click', () => {
+    note.classList.remove('waving');
+    void note.offsetWidth; /* force reflow */
+    note.classList.add('waving');
+  });
+  note.addEventListener('animationend', () => {
+    note.classList.remove('waving');
+  });
+});
+
+/* Red string connections between selected note pairs */
+const connections = [
+  ['n1','n4'], ['n2','n4'], ['n3','n4'],
+  ['n4','n5'], ['n4','n6'], ['n4','n8'],
+  ['n6','n12'], ['n5','n7'],
+  ['n7','n9'], ['n8','n10'], ['n9','n11']
+];
+
+function getCenter(el) {
+  const r = el.getBoundingClientRect();
+  const b = document.getElementById('board').getBoundingClientRect();
+  return { x: r.left - b.left + r.width / 2, y: r.top - b.top + 6 };
+}
+
+function jitter(v, a) { return v + (Math.random() - 0.5) * a; }
+
+function drawStrings() {
+  const svg = document.getElementById('strings');
+  svg.innerHTML = '';
+  connections.forEach(([aId, bId]) => {
+    const a = document.getElementById(aId);
+    const b = document.getElementById(bId);
+    if (!a || !b) return;
+    const pA = getCenter(a);
+    const pB = getCenter(b);
+    const cx = jitter((pA.x + pB.x) / 2, 30);
+    const cy = jitter((pA.y + pB.y) / 2 + 22, 20);
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.setAttribute('d', `M ${pA.x} ${pA.y} Q ${cx} ${cy} ${pB.x} ${pB.y}`);
+    path.setAttribute('stroke', '#c0392b');
+    path.setAttribute('stroke-width', '1.6');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-opacity', '0.75');
+    path.setAttribute('stroke-dasharray', `${Math.floor(Math.random()*4+2)} ${Math.floor(Math.random()*3+1)}`);
+    path.setAttribute('stroke-linecap', 'round');
+    svg.appendChild(path);
+  });
+}
+
+window.addEventListener('load', () => setTimeout(drawStrings, 120));
+window.addEventListener('resize', () => {
+  clearTimeout(window._rt);
+  window._rt = setTimeout(drawStrings, 180);
+});
+</script>
+</body>
+</html>
